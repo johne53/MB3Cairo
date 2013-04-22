@@ -208,6 +208,7 @@
 #endif
 
 #ifdef _MSC_VER
+#pragma warning (disable:4146) /* Added by JE - 21-04-2013 (prevents constant warnings from 'cairo-wideint-type-private.h' */
 #ifndef __cplusplus
 #undef inline
 #define inline __inline
