@@ -1,22 +1,14 @@
 #! e:/program files/perl/bin/perl.exe
 #  version info can be found in 'cairo-version.h'
 
+require "../local-paths.lib";
+
 $major = 1;
 $minor = 12;
 $micro = 15;
 $binary_age = 112;
 $interface_age = 0;
 $current_minus_age = 2;
-$glib_build_root_folder = "F:\\+GTK-SOURCES\\gnu-windows\\src\\MB3Glib";
-$generic_include_folder = "F:\\+GTK-SOURCES\\gnu-windows\\include";
-$generic_library_folder = "F:\\+GTK-SOURCES\\gnu-windows\\lib";
-$generic_win32_library_folder = "F:\\+GTK-SOURCES\\gnu-windows\\lib\\win32";
-$generic_win32_binary_folder = "F:\\+GTK-SOURCES\\gnu-windows\\bin";
-$debug32_testsuite_folder = "F:\\+GTK-SOURCES\\gnu-win32\\TestApps\\Debug\\Mixbus\\bin";
-$release32_testsuite_folder = "F:\\+GTK-SOURCES\\gnu-win32\\TestApps\\Release\\Mixbus\\bin";
-$debug32_target_folder = "C:\\Program Files\\Mixbus\\bin";
-$release32_target_folder = "E:\\Mixbus\\bin";
-$target_sxs_folder = "F:\\+GTK-SOURCES\\gnu-windows\\include\\ardourext\\sys";
 
 sub process_file
 {
