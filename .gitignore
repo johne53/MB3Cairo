@@ -40,7 +40,7 @@ stamp-h.in
 /src/cairo-win32-printing-surface.c
 /src/cairo-win32-private.h
 /src/cairo-win32-surface.c
-/win32-fixup.pl
 /msvc/cairo/cairo.rc
 /msvc/cairo/cairo.aps
 /msvc/cairo.vsprops
+/win32-fixup.pl.in
