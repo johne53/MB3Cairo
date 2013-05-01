@@ -211,7 +211,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Copy configuration file(s)"
-				CommandLine="copy /Y &quot;..\src\cairo-features.h.win32&quot; &quot;..\src\cairo-features.h&quot;&#x0D;&#x0A;copy /Y &quot;..\src\win32\*.h&quot; &quot;..\src&quot;&#x0D;&#x0A;copy /Y &quot;..\src\win32\*.c&quot; &quot;..\src&quot;&#x0D;&#x0A;"
+				CommandLine="copy /Y &quot;..\..\MB3Cairo\cairo-version.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-features.h.win32&quot; &quot;..\src\cairo-features.h&quot;&#x0D;&#x0A;copy /Y &quot;..\src\win32\*.h&quot; &quot;..\src&quot;&#x0D;&#x0A;copy /Y &quot;..\src\win32\*.c&quot; &quot;..\src&quot;&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
