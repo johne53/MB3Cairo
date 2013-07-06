@@ -1133,6 +1133,7 @@ _get_bitmap_surface (FT_Bitmap		     *bitmap,
     unsigned char *data;
     int format = CAIRO_FORMAT_A8;
     cairo_image_surface_t *image;
+    cairo_bool_t component_alpha = FALSE;
 
     width = bitmap->width;
     height = bitmap->rows;
@@ -1163,9 +1164,7 @@ _get_bitmap_surface (FT_Bitmap		     *bitmap,
 		source = bitmap->buffer;
 		dest = data;
 		for (i = height; i; i--) {
-		    memcpy (dest, source, bitmap->pitch);
-		    memset (dest + bitmap->pitch, '\0', stride - bitmap->pitch);
-
+		    memcpy (dest, source, stride);
 		    source += bitmap->pitch;
 		    dest += stride;
 		}
@@ -1189,7 +1188,9 @@ _get_bitmap_surface (FT_Bitmap		     *bitmap,
     case FT_PIXEL_MODE_LCD:
     case FT_PIXEL_MODE_LCD_V:
     case FT_PIXEL_MODE_GRAY:
-	if (font_options->antialias != CAIRO_ANTIALIAS_SUBPIXEL) {
+	if (font_options->antialias != CAIRO_ANTIALIAS_SUBPIXEL ||
+	    bitmap->pixel_mode == FT_PIXEL_MODE_GRAY)
+	{
 	    stride = bitmap->pitch;
 	    if (own_buffer) {
 		data = bitmap->buffer;
@@ -1203,17 +1204,27 @@ _get_bitmap_surface (FT_Bitmap		     *bitmap,
 
 	    format = CAIRO_FORMAT_A8;
 	} else {
-	    /* if we get there, the  data from the source bitmap
-	     * really comes from _fill_xrender_bitmap, and is
-	     * made of 32-bit ARGB or ABGR values */
-	    assert (own_buffer != 0);
-	    assert (bitmap->pixel_mode != FT_PIXEL_MODE_GRAY);
-
 	    data = bitmap->buffer;
 	    stride = bitmap->pitch;
 	    format = CAIRO_FORMAT_ARGB32;
+	    component_alpha = TRUE;
 	}
 	break;
+#ifdef FT_LOAD_COLOR
+    case FT_PIXEL_MODE_BGRA:
+	stride = width * 4;
+	if (own_buffer) {
+	    data = bitmap->buffer;
+	} else {
+	    data = _cairo_malloc_ab (height, stride);
+	    if (!data)
+		return _cairo_error (CAIRO_STATUS_NO_MEMORY);
+
+	    memcpy (data, bitmap->buffer, stride * height);
+	}
+	format = CAIRO_FORMAT_ARGB32;
+	break;
+#endif
     case FT_PIXEL_MODE_GRAY2:
     case FT_PIXEL_MODE_GRAY4:
 	/* These could be triggered by very rare types of TrueType fonts */
@@ -1233,7 +1244,7 @@ _get_bitmap_surface (FT_Bitmap		     *bitmap,
 	return (*surface)->base.status;
     }
 
-    if (format == CAIRO_FORMAT_ARGB32)
+    if (component_alpha)
 	pixman_image_set_component_alpha (image->pixman_image, TRUE);
 
     _cairo_image_surface_assume_ownership_of_data (image);
@@ -1491,7 +1502,7 @@ _transform_glyph_bitmap (cairo_matrix_t         * shape,
      * the "shape" portion of the font transform
      */
     original_to_transformed = *shape;
-    
+
     cairo_surface_get_device_offset (&(*surface)->base, &origin_x, &origin_y);
     orig_width = (*surface)->width;
     orig_height = (*surface)->height;
@@ -1541,7 +1552,11 @@ _transform_glyph_bitmap (cairo_matrix_t         * shape,
     if (unlikely (status))
 	return status;
 
-    image = cairo_image_surface_create (CAIRO_FORMAT_A8, width, height);
+    if (cairo_image_surface_get_format (*surface) == CAIRO_FORMAT_ARGB32 &&
+        !pixman_image_get_component_alpha ((*surface)->pixman_image))
+      image = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
+    else
+      image = cairo_image_surface_create (CAIRO_FORMAT_A8, width, height);
     if (unlikely (image->status))
 	return image->status;
 
@@ -2169,6 +2184,20 @@ _cairo_ft_scaled_glyph_init (void			*abstract_font,
 	load_flags &= ~FT_LOAD_VERTICAL_LAYOUT;
 	vertical_layout = TRUE;
     }
+
+#ifdef FT_LOAD_COLOR
+    /* Color-glyph support:
+     *
+     * This flags needs plumbing through fontconfig (does it?), and
+     * maybe we should cache color and grayscale bitmaps separately
+     * such that users of the font (ie. the surface) can choose which
+     * version to use based on target content type.
+     *
+     * Moreover, none of our backends and compositors currently support
+     * color glyphs.  As such, this is currently disabled.
+     */
+    /* load_flags |= FT_LOAD_COLOR; */
+#endif
 
     error = FT_Load_Glyph (face,
 			   _cairo_scaled_glyph_index(scaled_glyph),
