@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="iconvD.lib freetype32-2D.lib libpixman-1D.lib libpng12D.lib zlib1D.lib libxml2D.lib libfontconfigD.lib MSImg32.lib"
-				OutputFile="$(OutDir)\$(DllPrefix)$(ProjectName)$(DllSuffix)D.dll"
+				OutputFile="$(OutDir)\$(DllPrefix)$(ProjectName)32$(DllSuffix)D.dll"
 				AdditionalLibraryDirectories="..\..\..\lib;&quot;$(ProjectDir)\$(ConfigurationName)\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrt.lib"
 				ModuleDefinitionFile=""
@@ -161,7 +161,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="iconvRDC.lib freetype32-2RDC.lib libpixman-1RDC.lib libpng12RDC.lib zlib1RDC.lib libxml2RDC.lib libfontconfigRDC.lib MSImg32.lib"
-				OutputFile="$(OutDir)\$(DllPrefix)$(ProjectName)$(DllSuffix)RDC.dll"
+				OutputFile="$(OutDir)\$(DllPrefix)$(ProjectName)32$(DllSuffix)RDC.dll"
 				AdditionalLibraryDirectories="..\..\..\lib;&quot;$(ProjectDir)\$(ConfigurationName)\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrtD.lib"
 				ModuleDefinitionFile=""
@@ -252,7 +252,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="iconv.lib freetype32-2.lib libpixman-1.lib libpng12.lib zlib1.lib libxml2.lib libfontconfig.lib MSImg32.lib"
-				OutputFile="$(OutDir)\$(DllPrefix)$(ProjectName)$(DllSuffix).dll"
+				OutputFile="$(OutDir)\$(DllPrefix)$(ProjectName)32$(DllSuffix).dll"
 				AdditionalLibraryDirectories="..\..\..\lib;&quot;$(ProjectDir)\$(ConfigurationName)\lib&quot;"
 				IgnoreDefaultLibraryNames="msvcrtD.lib"
 				ModuleDefinitionFile=""
