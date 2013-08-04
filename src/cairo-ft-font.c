@@ -54,6 +54,7 @@
 #include FT_FREETYPE_H
 #include FT_OUTLINE_H
 #include FT_IMAGE_H
+#include FT_BITMAP_H
 #include FT_TRUETYPE_TABLES_H
 #include FT_XFREE86_H
 #if HAVE_FT_GLYPHSLOT_EMBOLDEN
@@ -1125,6 +1126,7 @@ _fill_xrender_bitmap(FT_Bitmap      *target,
  */
 static cairo_status_t
 _get_bitmap_surface (FT_Bitmap		     *bitmap,
+		     FT_Library		      library,
 		     cairo_bool_t	      own_buffer,
 		     cairo_font_options_t    *font_options,
 		     cairo_image_surface_t  **surface)
@@ -1227,6 +1229,49 @@ _get_bitmap_surface (FT_Bitmap		     *bitmap,
 #endif
     case FT_PIXEL_MODE_GRAY2:
     case FT_PIXEL_MODE_GRAY4:
+	if (!own_buffer && library)
+	{
+	    /* This is pretty much the only case that we can get in here. */
+	    /* Convert to 8bit grayscale. */
+
+	    FT_Bitmap  tmp;
+	    FT_Int     align;
+
+	    if ( bitmap->pixel_mode == FT_PIXEL_MODE_GRAY2 )
+	      align = ( bitmap->width + 3 ) / 4;
+	    else
+	      align = ( bitmap->width + 1 ) / 2;
+
+	    FT_Bitmap_New( &tmp );
+
+	    if (FT_Bitmap_Convert( library, bitmap, &tmp, align ))
+		return _cairo_error (CAIRO_STATUS_NO_MEMORY);
+
+	    FT_Bitmap_Done( library, bitmap );
+	    *bitmap = tmp;
+
+	    stride = bitmap->pitch;
+	    data = _cairo_malloc_ab (height, stride);
+	    if (!data)
+		return _cairo_error (CAIRO_STATUS_NO_MEMORY);
+
+	    if (bitmap->num_grays != 256)
+	    {
+	      unsigned int x, y;
+	      unsigned int mul = 255 / (bitmap->num_grays - 1);
+	      FT_Byte *p = bitmap->buffer;
+	      for (y = 0; y < height; y++) {
+	        for (x = 0; x < width; x++)
+		  p[x] *= mul;
+		p += bitmap->pitch;
+	      }
+	    }
+
+	    memcpy (data, bitmap->buffer, stride * height);
+
+	    format = CAIRO_FORMAT_A8;
+	    break;
+	}
 	/* These could be triggered by very rare types of TrueType fonts */
     default:
 	if (own_buffer)
@@ -1420,7 +1465,7 @@ _render_glyph_outline (FT_Face                    face,
 	/* Note:
 	 * _get_bitmap_surface will free bitmap.buffer if there is an error
 	 */
-	status = _get_bitmap_surface (&bitmap, TRUE, font_options, surface);
+	status = _get_bitmap_surface (&bitmap, NULL, TRUE, font_options, surface);
 	if (unlikely (status))
 	    return status;
 
@@ -1461,6 +1506,7 @@ _render_glyph_bitmap (FT_Face		      face,
 	return _cairo_error (CAIRO_STATUS_NO_MEMORY);
 
     status = _get_bitmap_surface (&glyphslot->bitmap,
+				  glyphslot->library,
 				  FALSE, font_options,
 				  surface);
     if (unlikely (status))
