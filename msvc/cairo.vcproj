@@ -119,7 +119,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Copy configuration file(s)"
-				CommandLine="copy /Y &quot;..\..\MB3Cairo\cairo-version.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-features.h.win32&quot; &quot;..\src\cairo-features.h&quot;&#x0D;&#x0A;copy /Y &quot;..\src\win32\*.h&quot; &quot;..\src&quot;&#x0D;&#x0A;copy /Y &quot;..\src\win32\*.c&quot; &quot;..\src&quot;&#x0D;&#x0A;"
+				CommandLine="mkdir &quot;$(GenericIncludeFolder)\cairo&quot; 2&gt; NUL&#x0D;&#x0A;copy /Y &quot;..\..\MB3Cairo\cairo-version.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-features.h.win32&quot; &quot;..\src\cairo-features.h&quot;&#x0D;&#x0A;copy /Y &quot;..\src\win32\*.h&quot; &quot;..\src&quot;&#x0D;&#x0A;copy /Y &quot;..\src\win32\*.c&quot; &quot;..\src&quot;&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -195,7 +195,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy /Y &quot;..\src\cairo.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-deprecated.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-features.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-ft.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-pdf.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-ps.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-svg.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-win32.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-xml.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;$(OutDir)\$(TargetName).dll&quot; &quot;$(Release32TestSuiteFolder)\$(TargetName).dll&quot;&#x0D;&#x0A;copy /Y &quot;$(OutDir)\$(TargetName).lib&quot; &quot;$(GenericWin32LibraryFolder)\$(TargetName).lib&quot;&#x0D;&#x0A;"
+				CommandLine="mkdir &quot;$(GenericLibraryFolder)\pkgconfig&quot; 2&gt; NUL&#x0D;&#x0A;mkdir &quot;$(GenericIncludeFolder)\cairo&quot; 2&gt; NUL&#x0D;&#x0A;copy /Y &quot;..\src\cairo.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-deprecated.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-features.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-ft.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-pdf.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-ps.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-svg.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-win32.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;..\src\cairo-xml.h&quot; &quot;$(GenericIncludeFolder)\cairo&quot;&#x0D;&#x0A;copy /Y &quot;$(OutDir)\$(TargetName).dll&quot; &quot;$(Release32TestSuiteFolder)\$(TargetName).dll&quot;&#x0D;&#x0A;copy /Y &quot;$(OutDir)\$(TargetName).lib&quot; &quot;$(GenericWin32LibraryFolder)\$(TargetName).lib&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
