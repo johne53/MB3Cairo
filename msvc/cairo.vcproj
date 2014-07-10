@@ -488,30 +488,86 @@
 			<File
 				RelativePath="..\src\cairo-mask-compositor.c"
 				>
+				<FileConfiguration
+					Name="Release 32|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\cairo-matrix.c"
 				>
+				<FileConfiguration
+					Name="Release 32|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\cairo-mempool.c"
 				>
+				<FileConfiguration
+					Name="Release 32|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\cairo-mesh-pattern-rasterizer.c"
 				>
+				<FileConfiguration
+					Name="Release 32|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\cairo-misc.c"
 				>
+				<FileConfiguration
+					Name="Release 32|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\cairo-mono-scan-converter.c"
 				>
+				<FileConfiguration
+					Name="Release 32|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\cairo-mutex.c"
 				>
+				<FileConfiguration
+					Name="Release 32|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\src\cairo-no-compositor.c"
