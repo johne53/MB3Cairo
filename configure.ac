@@ -15,6 +15,7 @@ AC_CHECK_HEADERS([unistd.h sys/ioctl.h])
 
 AM_INIT_AUTOMAKE([1.11 foreign -Wall no-define no-dist-gzip dist-xz])
 AM_SILENT_RULES([yes])
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR]) dnl Workaround for Automake 1.12
 
 # Initialize libtool
 LT_PREREQ([2.2])
@@ -190,6 +191,7 @@ CAIRO_ENABLE_SURFACE_BACKEND(qt, Qt, no, [
 		    [qt_REQUIRES=""
 		     use_qt="no (requires Qt4 development libraries)"
 		     ])
+  qt_NONPKGCONFIG_LIBS="-lstdc++"
 ])
 
 dnl ===========================================================================
@@ -249,16 +251,16 @@ CAIRO_ENABLE_SURFACE_BACKEND(skia, Skia, no, [
 			      [directory to find compiled skia sources])],
 	      [skia_DIR="$withval"],
 	      [skia_DIR="`pwd`/../skia"])
-  AC_ARG_WITH([skia-bulid],
-	      [AS_HELP_STRING([--with-skia-build=(Release|Debug)]
+  AC_ARG_WITH([skia-build-type],
+	      [AS_HELP_STRING([--with-skia-build-type=(Release|Debug)]
 			      [build of skia to link with, default is Release])],
-	      [skia_BUILD="$withval"],
-	      [skia_BUILD="Release"])
+	      [skia_BUILD_TYPE="$withval"],
+	      [skia_BUILD_TYPE="Release"])
   skia_NONPKGCONFIG_CFLAGS="-I$skia_DIR/include/config -I$skia_DIR/include/core -I$skia_DIR/include/effects"
-  if test "x$skia_BUILD" = x"Release"; then
+  if test "x$skia_BUILD_TYPE" = "xRelease"; then
   	skia_NONPKGCONFIG_CFLAGS="-DSK_RELEASE -DSK_CAN_USE_FLOAT $skia_NONPKGCONFIG_CFLAGS"
   fi
-  skia_NONPKGCONFIG_LIBS="--start-group $skia_DIR/out/$skia_BUILD/obj.target/gyp/libeffects.a $skia_DIR/out/$skia_BUILD/obj.target/gyp/libimages.a $skia_DIR/out/$skia_BUILD/obj.target/gyp/libutils.a $skia_DIR/out/$skia_BUILD/obj.target/gyp/libopts.a $skia_DIR/out/$skia_BUILD/obj.target/gyp/libcore.a -end-group"
+  skia_NONPKGCONFIG_LIBS="-L$skia_DIR/out/$skia_BUILD_TYPE/lib.target/ -lskia -lstdc++"
   AC_SUBST(skia_DIR)
 ])
 
@@ -865,6 +867,8 @@ util/cairo-trace/cairo-trace
 doc/Makefile
 doc/public/Makefile
 ])
+AC_CONFIG_COMMANDS([cairo-trace],
+		   [chmod a+x util/cairo-trace/cairo-trace])
 
 AC_OUTPUT
 CAIRO_REPORT
