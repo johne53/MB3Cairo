@@ -26,6 +26,7 @@ test_sources = \
 	bilevel-image.c					\
 	bug-40410.c					\
 	bug-51910.c					\
+	bug-84115.c					\
 	bug-bo-rectangular.c				\
 	bug-bo-collins.c				\
 	bug-bo-ricotz.c					\
@@ -310,6 +311,7 @@ test_sources = \
 	show-text-current-point.c			\
 	shape-general-convex.c				\
 	shape-sierpinski.c				\
+	simple.c					\
 	skew-extreme.c					\
 	smask.c						\
 	smask-fill.c					\
@@ -400,6 +402,10 @@ gl_surface_test_sources = \
 	gl-device-release.c \
 	gl-oversized-surface.c \
 	gl-surface-source.c
+
+egl_surface_test_sources = \
+       egl-oversized-surface.c \
+       egl-surface-source.c
 
 quartz_surface_test_sources = quartz-surface-source.c
 
