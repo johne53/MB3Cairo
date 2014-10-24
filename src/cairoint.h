@@ -240,6 +240,32 @@ be32_to_cpu(uint32_t v)
 
 #endif
 
+/* Unaligned big endian access
+ */
+
+static inline uint16_t get_unaligned_be16 (const unsigned char *p)
+{
+    return p[0] << 8 | p[1];
+}
+
+static inline uint32_t get_unaligned_be32 (const unsigned char *p)
+{
+    return p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
+}
+
+static inline void put_unaligned_be16 (uint16_t v, unsigned char *p)
+{
+    p[0] = (v >> 8) & 0xff;
+    p[1] = v & 0xff;
+}
+
+static inline void put_unaligned_be32 (uint32_t v, unsigned char *p)
+{
+    p[0] = (v >> 24) & 0xff;
+    p[1] = (v >> 16) & 0xff;
+    p[2] = (v >> 8)  & 0xff;
+    p[3] = v & 0xff;
+}
 
 /* The glibc versions of ispace() and isdigit() are slow in UTF-8 locales.
  */
@@ -2008,10 +2034,6 @@ slim_hidden_proto (cairo_region_xor_rectangle);
 slim_hidden_proto (cairo_surface_write_to_png_stream);
 
 #endif
-
-cairo_private_no_warn cairo_filter_t
-_cairo_pattern_analyze_filter (const cairo_pattern_t	*pattern,
-			       double			*pad_out);
 
 CAIRO_END_DECLS
 

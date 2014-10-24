@@ -1223,6 +1223,31 @@ _cairo_mime_data_destroy (void *ptr)
 }
 
 /**
+ * CAIRO_MIME_TYPE_JBIG2:
+ *
+ * Joint Bi-level Image Experts Group image coding standard (ISO/IEC 11544).
+ *
+ * Since: 1.14
+ **/
+
+/**
+ * CAIRO_MIME_TYPE_JBIG2_GLOBAL:
+ *
+ * Joint Bi-level Image Experts Group image coding standard (ISO/IEC 11544) global segment.
+ *
+ * Since: 1.14
+ **/
+
+/**
+ * CAIRO_MIME_TYPE_JBIG2_GLOBAL_ID:
+ *
+ * An unique identifier shared by a JBIG2 global segment and all JBIG2 images
+ * that depend on the global segment.
+ *
+ * Since: 1.14
+ **/
+
+/**
  * CAIRO_MIME_TYPE_JP2:
  *
  * The Joint Photographic Experts Group (JPEG) 2000 image coding standard (ISO/IEC 15444-1).
@@ -1257,7 +1282,8 @@ _cairo_mime_data_destroy (void *ptr)
 /**
  * CAIRO_MIME_TYPE_UNIQUE_ID:
  *
- * Unique identifier for a surface (cairo specific MIME type).
+ * Unique identifier for a surface (cairo specific MIME type). All surfaces with
+ * the same unique identifier will only be embedded once.
  *
  * Since: 1.12
  **/
@@ -1663,7 +1689,7 @@ slim_hidden_def (cairo_surface_mark_dirty_rectangle);
  * @x_scale: a scale factor in the X direction
  * @y_scale: a scale factor in the Y direction
  *
- * Sets an scale that is multiplied to the device coordinates determined
+ * Sets a scale that is multiplied to the device coordinates determined
  * by the CTM when drawing to @surface. One common use for this is to
  * render to very high resolution display devices at a scale factor, so
  * that code that assumes 1 pixel will be a certain size will still work.
