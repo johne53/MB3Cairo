@@ -482,6 +482,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\cairo-line.c"
+				>
+			</File>
+			<File
 				RelativePath="..\src\cairo-lzw.c"
 				>
 			</File>
