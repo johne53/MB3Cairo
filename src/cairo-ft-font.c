@@ -68,6 +68,11 @@
 
 #if HAVE_UNISTD_H
 #include <unistd.h>
+#elif defined _MSC_VER /* This section added by JE - 21-04-2013 */
+#include <io.h>
+#ifndef R_OK
+#define R_OK 4
+#endif
 #else
 #define access(p, m) 0
 #endif
