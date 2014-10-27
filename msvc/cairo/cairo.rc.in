@@ -1,0 +1,45 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource."
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+#include <winver.h>
+
+VS_VERSION_INFO VERSIONINFO
+  FILEVERSION @CAIRO_VERSION_MAJOR@,@CAIRO_VERSION_MINOR@,@CAIRO_VERSION_MICRO@,@CAIRO_INTERFACE_AGE@
+  PRODUCTVERSION @CAIRO_VERSION_MAJOR@,@CAIRO_VERSION_MINOR@,@CAIRO_VERSION_MICRO@,@CAIRO_INTERFACE_AGE@
+  FILEFLAGSMASK 0
+  FILEFLAGS 0
+  FILEOS VOS__WINDOWS32
+  FILETYPE VFT_DLL
+  FILESUBTYPE VFT2_UNKNOWN
+  BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+      BLOCK "040904B0"
+      BEGIN
+	VALUE "CompanyName", "cairographics.org"
+	VALUE "FileDescription", "Libcairo for Ardour and Mixbus"
+	VALUE "FileVersion", "@CAIRO_VERSION_MAJOR@, @CAIRO_VERSION_MINOR@, @CAIRO_VERSION_MICRO@, @CAIRO_INTERFACE_AGE@"
+	VALUE "InternalName", "libcairo-@LT_CURRENT_MINUS_AGE@"
+	VALUE "LegalCopyright", "Copyright © 1991-1999, The Free Software Foundation Inc."
+	VALUE "OriginalFilename", "libcairo-@LT_CURRENT_MINUS_AGE@.dll"
+	VALUE "ProductName", "cairo"
+	VALUE "ProductVersion", "@CAIRO_VERSION_MAJOR@, @CAIRO_VERSION_MINOR@, @CAIRO_VERSION_MICRO@, @CAIRO_INTERFACE_AGE@"
+      END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+      VALUE "Translation", 0x409, 1200
+    END
+  END
+
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\0"
+END
