@@ -31,3 +31,17 @@ stamp-h.in
 *.rej
 *-uninstalled.pc
 .vimrc
+
+/src/cairo-win32-system.c
+/src/cairo-win32-debug.c
+/src/cairo-win32-device.c
+/src/cairo-win32-display-surface.c
+/src/cairo-win32-font.c
+/src/cairo-win32-gdi-compositor.c
+/src/cairo-win32-printing-surface.c
+/src/cairo-win32-private.h
+/src/cairo-win32-surface.c
+/msvc/cairo/cairo.rc
+/msvc/cairo/cairo.aps
+/msvc/cairo.vsprops
+/win32-fixup.pl.in
