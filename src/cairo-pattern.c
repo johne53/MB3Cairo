@@ -3338,7 +3338,7 @@ _cairo_pattern_is_clear (const cairo_pattern_t *abstract_pattern)
     return FALSE;
 }
 
-/**
+/*
  * Will given row of back-translation matrix work with bilinear scale?
  * This is true for scales larger than 1. Also it was judged acceptable
  * for scales larger than .75. And if there is integer translation
@@ -3419,7 +3419,7 @@ _cairo_hypot(double x, double y)
 }
 
 /**
- * _cairo_pattern_sampled_area
+ * _cairo_pattern_sampled_area:
  *
  * Return region of @pattern that will be sampled to fill @extents,
  * based on the transformation and filter.
@@ -3531,7 +3531,7 @@ _cairo_pattern_get_extents (const cairo_pattern_t         *pattern,
 			    cairo_rectangle_int_t         *extents)
 {
     double x1, y1, x2, y2;
-    int ix1, ix2, iy1, iy2;
+    double ix1, ix2, iy1, iy2;
     cairo_bool_t round_x = FALSE;
     cairo_bool_t round_y = FALSE;
 
@@ -3725,12 +3725,12 @@ _cairo_pattern_get_extents (const cairo_pattern_t         *pattern,
     if (x1 < CAIRO_RECT_INT_MIN)
 	ix1 = CAIRO_RECT_INT_MIN;
     else 
-	ix1 = _cairo_lround (x1);
+	ix1 = x1;
     if (x2 > CAIRO_RECT_INT_MAX)
 	ix2 = CAIRO_RECT_INT_MAX;
     else
-	ix2 = _cairo_lround (x2);
-    extents->x = ix1; extents->width  = ix2 - ix1;
+	ix2 = x2;
+    extents->x = ix1; extents->width  = _cairo_lround(ix2 - ix1);
 
     if (!round_y) {
 	y1 -= 0.5;
@@ -3744,7 +3744,7 @@ _cairo_pattern_get_extents (const cairo_pattern_t         *pattern,
 	iy2 = CAIRO_RECT_INT_MAX;
     else
 	iy2 = _cairo_lround (y2);
-    extents->y = iy1; extents->height = iy2 - iy1;
+    extents->y = iy1; extents->height = _cairo_lround(iy2 - iy1);
 
     return;
 

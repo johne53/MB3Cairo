@@ -1292,9 +1292,12 @@ _cairo_xcb_surface_picture (cairo_xcb_surface_t *target,
 	    return picture;
     }
 
+    /* XXX: This causes too many problems and bugs, let's skip it for now. */
+#if 0
     _cairo_surface_attach_snapshot (source,
 				    &picture->base,
 				    NULL);
+#endif
 
     _cairo_xcb_surface_setup_surface_picture (picture, pattern, extents);
     return picture;
@@ -4467,6 +4470,9 @@ _cairo_xcb_surface_add_glyph (cairo_xcb_connection_t *connection,
 	    const uint8_t *d;
 	    uint8_t *new, *n;
 
+	    if (c == 0)
+		break;
+
 	    new = malloc (c);
 	    if (unlikely (new == NULL)) {
 		status = _cairo_error (CAIRO_STATUS_NO_MEMORY);
@@ -4494,6 +4500,9 @@ _cairo_xcb_surface_add_glyph (cairo_xcb_connection_t *connection,
 	    unsigned int c = glyph_surface->stride * glyph_surface->height / 4;
 	    const uint32_t *d;
 	    uint32_t *new, *n;
+
+	    if (c == 0)
+		break;
 
 	    new = malloc (4 * c);
 	    if (unlikely (new == NULL)) {

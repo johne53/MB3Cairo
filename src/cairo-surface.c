@@ -1223,6 +1223,31 @@ _cairo_mime_data_destroy (void *ptr)
 }
 
 /**
+ * CAIRO_MIME_TYPE_JBIG2:
+ *
+ * Joint Bi-level Image Experts Group image coding standard (ISO/IEC 11544).
+ *
+ * Since: 1.14
+ **/
+
+/**
+ * CAIRO_MIME_TYPE_JBIG2_GLOBAL:
+ *
+ * Joint Bi-level Image Experts Group image coding standard (ISO/IEC 11544) global segment.
+ *
+ * Since: 1.14
+ **/
+
+/**
+ * CAIRO_MIME_TYPE_JBIG2_GLOBAL_ID:
+ *
+ * An unique identifier shared by a JBIG2 global segment and all JBIG2 images
+ * that depend on the global segment.
+ *
+ * Since: 1.14
+ **/
+
+/**
  * CAIRO_MIME_TYPE_JP2:
  *
  * The Joint Photographic Experts Group (JPEG) 2000 image coding standard (ISO/IEC 15444-1).
@@ -1257,7 +1282,8 @@ _cairo_mime_data_destroy (void *ptr)
 /**
  * CAIRO_MIME_TYPE_UNIQUE_ID:
  *
- * Unique identifier for a surface (cairo specific MIME type).
+ * Unique identifier for a surface (cairo specific MIME type). All surfaces with
+ * the same unique identifier will only be embedded once.
  *
  * Since: 1.12
  **/
@@ -1528,12 +1554,12 @@ _cairo_surface_flush (cairo_surface_t *surface, unsigned flags)
  * cairo_surface_flush:
  * @surface: a #cairo_surface_t
  *
- * Do any pending drawing for the surface and also restore any
- * temporary modifications cairo has made to the surface's
- * state. This function must be called before switching from
- * drawing on the surface with cairo to drawing on it directly
- * with native APIs. If the surface doesn't support direct access,
- * then this function does nothing.
+ * Do any pending drawing for the surface and also restore any temporary
+ * modifications cairo has made to the surface's state. This function
+ * must be called before switching from drawing on the surface with
+ * cairo to drawing on it directly with native APIs, or accessing its
+ * memory outside of Cairo. If the surface doesn't support direct
+ * access, then this function does nothing.
  *
  * Since: 1.0
  **/

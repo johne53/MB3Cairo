@@ -1,3 +1,78 @@
+Release 1.14.2 (2014-03-09 Bryce Harrington <bryce@osg.samsung.com>)
+====================================================================
+This release provides collected bug fixes, along with one feature
+enhancement for the xcb backend, and a small performance improvement for
+fonts.
+
+The running theme of the bug fixes is platform-specific issues, both
+build and run-time.  Platforms with fixes include Sparc, AIX, Windows
+(mingw), and Windows (MSVC8).  Memory leaks, valgrind issues, and PDF
+issues round out our list.
+
+It's come to light that changes in cairo 1.14 resulted in breakage on
+MacOS X 10.4.  We've not yet determined whether to fix up the support,
+or excise the 10.4-specific code and support only OS X 10.5 or newer.
+Meantime, we'll only advertise cairo as working on OS X 10.5.
+
+Features
+--------
+ * Improve xcb's handling of per-screen subpixel ordering.  If no
+   Xft.rgba property is specified, default to the screen's subpixel
+   order.
+
+API Changes
+-----------
+None
+
+Dependency Changes
+------------------
+None
+
+Performance Optimizations
+-------------------------
+ * Improve performance of cpu_to_be32 and be32_to_cpu, making truetype
+   subsetting of large fonts run about 15% faster.
+
+Bug Fixes
+---------
+ * Fix unaligned access on sparc with the compact font format (CFF).
+   Unlike truetype, all data in CFF is not aligned.
+   (Debian bug #712836)
+ * Fix unaligned access on sparc with tor-scan-converter's memory pool.
+ * Fix crash when loading a PDF with a transformed image.
+   (fdo bug #85151)
+ * Fix regression on mingw for bigendian test due to removal of file
+   extension for executables.
+   (fdo bug #85120)
+ * Fix handling of backslash in PDF interpreter
+   (fdo bug #85662)
+ * Fix crash in xlib and xcb renderers when swapping a 0-sized glyph
+ * Fix bug with RTL text in PDF operators
+   (fdo bug #86461)
+ * Fix compilation 'cairo-path-stroke-traps.c' with MSVC8
+   (fdo bug #84908)
+ * Fix crash in _fill_xrgb32_lerp_opaque_spans when a span length is
+   negative.
+ * Fix valgrind error by releasing pattern created by
+   cairo_pattern_create_rgb().
+ * Fix valgrind errors when running cairo-test-suite.
+ * Fix memory leak in recording surface replays
+   (fdo bug #87898)
+ * Fix destruction of fonts in api-special-cases test.
+   (fdo bug #87567)
+ * Fix duplicated surface push on similar-image, preventing trivial GTK3
+   program traces from being replayable, with an error message about
+   invalid values for the size of the input.
+   (fdo bug #73580)
+ * Fix crash when win32 surface's image size does not cover the entire
+   surface.
+   (fdo bug #53121)
+ * Fix crash due to obsolete CGFontGetGlyphPath call
+   (fdo bug #84324)
+ * Fix several build issues on AIX
+   (fdo bugs #89338, #89340, #89356, #89354)
+ * Fix various documentation warnings and errors
+
 Release 1.14.0 (2014-10-13 Bryce Harrington <bryce@osg.samsung.com>)
 ====================================================================
 Hard to believe it's been over a year since our last release, but it's
@@ -445,7 +520,7 @@ Release 1.12.4 (2012-10-05 Chris Wilson <chris@chris-wilson.co.uk>)
 ===================================================================
 More bugs, and more importantly, more fixes. On the cairo-gl side, we
 have refinements to the MSAA compositor which enables hardware
-acceleration of comparitively low-quality antialiasing - which is useful
+acceleration of comparatively low-quality antialiasing - which is useful
 in animations and on very high density screens. For cairo-xlib, we have
 finally enabled SHM transport for image transfers to and from the X
 server. A long standing required feature, SHM transport offers a notable
@@ -1382,7 +1457,7 @@ Optimisations:
   image in the final output. This is unlike previous versions of cairo
   which would generate very large PDF files with multiple copies of
   the same image. Adrian says that the PDF is not quite working as
-  well as it should yet, so we hope for futher improvements before
+  well as it should yet, so we hope for further improvements before
   cairo 1.10.
 
 Bug fixes:
@@ -2134,7 +2209,7 @@ cairo_font_options_set_lcd_filter
 cairo_font_options_get_lcd_filter
 
   These add the possibility to choose between various available LCD subpixel
-  filters.  The available filter values are modeled after what FreeType
+  filters.  The available filter values are modelled after what FreeType
   provides.
 
 
@@ -5759,7 +5834,7 @@ General bug fixes
 	  (Richard Stellingwerff, Owen Taylor)
 
  * 4231
- * 4298 - Accomodate gentoo and Mandriva versions in X server vendor string check
+ * 4298 - Accommodate gentoo and Mandriva versions in X server vendor string check
 	  (Billy Biggs, Frederic Crozat, Owen Taylor)
 
 win32-specific fixes
