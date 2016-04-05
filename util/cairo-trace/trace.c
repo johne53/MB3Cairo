@@ -1582,6 +1582,9 @@ _status_to_string (cairo_status_t status)
 	f(INVALID_MESH_CONSTRUCTION);
 	f(DEVICE_FINISHED);
 	f(JBIG2_GLOBAL_MISSING);
+	f(PNG_ERROR);
+	f(FREETYPE_ERROR);
+	f(WIN32_GDI_ERROR);
     case CAIRO_STATUS_LAST_STATUS:
 	break;
     }
