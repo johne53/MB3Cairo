@@ -272,7 +272,10 @@ test_sources = \
 	record90.c					\
 	recordflip.c					\
 	record-extend.c					\
+	record-neg-extents.c                            \
 	record-mesh.c					\
+	record-replay-extend.c                          \
+	recording-ink-extents.c                         \
 	recording-surface-pattern.c			\
 	recording-surface-extend.c			\
 	rectangle-rounding-error.c			\
