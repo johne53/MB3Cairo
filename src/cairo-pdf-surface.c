@@ -417,7 +417,7 @@ _cairo_pdf_surface_create_for_stream_internal (cairo_output_stream_t	*output,
     }
 
     surface->pdf_version = CAIRO_PDF_VERSION_1_5;
-    surface->compress_content = 0;
+    surface->compress_content = TRUE;
     surface->pdf_stream.active = FALSE;
     surface->pdf_stream.old_output = NULL;
     surface->group_stream.active = FALSE;
@@ -4833,8 +4833,12 @@ _cairo_pdf_surface_emit_unicode_for_glyph (cairo_pdf_surface_t	*surface,
 
     if (utf8 && *utf8) {
 	status = _cairo_utf8_to_utf16 (utf8, -1, &utf16, &utf16_len);
-	if (unlikely (status))
+	if (unlikely (status == CAIRO_INT_STATUS_INVALID_STRING)) {
+	    utf16 = NULL;
+	    utf16_len = 0;
+	} else if (unlikely (status)) {
 	    return status;
+	}
     }
 
     _cairo_output_stream_printf (surface->output, "<");
@@ -5110,13 +5114,14 @@ _cairo_pdf_surface_emit_cff_font (cairo_pdf_surface_t		*surface,
 	char *pdf_str;
 
 	status = _utf8_to_pdf_string (subset->family_name_utf8, &pdf_str);
-	if (unlikely (status))
+	if (likely (status == CAIRO_INT_STATUS_SUCCESS)) {
+	    _cairo_output_stream_printf (surface->output,
+					 "   /FontFamily %s\n",
+					 pdf_str);
+	    free (pdf_str);
+	} else if (status != CAIRO_INT_STATUS_INVALID_STRING) {
 	    return status;
-
-	_cairo_output_stream_printf (surface->output,
-				     "   /FontFamily %s\n",
-				     pdf_str);
-	free (pdf_str);
+	}
     }
 
     _cairo_output_stream_printf (surface->output,
@@ -5555,13 +5560,14 @@ _cairo_pdf_surface_emit_truetype_font_subset (cairo_pdf_surface_t		*surface,
 	char *pdf_str;
 
 	status = _utf8_to_pdf_string (subset.family_name_utf8, &pdf_str);
-	if (unlikely (status))
+	if (likely (status == CAIRO_INT_STATUS_SUCCESS)) {
+	    _cairo_output_stream_printf (surface->output,
+					 "   /FontFamily %s\n",
+					 pdf_str);
+	    free (pdf_str);
+	} else if (status != CAIRO_INT_STATUS_INVALID_STRING) {
 	    return status;
-
-	_cairo_output_stream_printf (surface->output,
-				     "   /FontFamily %s\n",
-				     pdf_str);
-	free (pdf_str);
+	}
     }
 
     _cairo_output_stream_printf (surface->output,
