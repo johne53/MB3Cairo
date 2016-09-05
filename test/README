@@ -21,9 +21,10 @@ The test suite needs to be run before any code is committed and before
 any release. See below for hints and rules governing the use of the suite.
 
 The test suite is built as a single binary, which allows you to choose
-individual or categories of tests to run. For example, if you want to
-run all text related tests you can use:
-    ./cairo-test-suite text
+individual or categories of tests to run. For example, to run specific tests:
+    ./cairo-test-suite record-neg-extents-unbounded record-neg-extents-bounded
+Or if you want to run all paint.* related tests you can use:
+    ./cairo-test-suite paint
 Or if you want to check the current status of known failures:
     ./cairo-test-suite XFAIL
 Or to run a subset of tests, use the -k option to run only the tests
@@ -278,42 +279,4 @@ the pdf-specific reference image.
 
 Here are the reported poppler bugs and the tests they affect:
 
-Poppler doesn't correctly handle gradients with transparency
-https://bugs.freedesktop.org/show_bug.cgi?id=12144
---------------------------------------------------
-fill-alpha-pattern
-gradient-alpha
-gradient-constant-alpha
-linear-gradient
-linear-gradient-reflect
-radial-gradient
-trap-clip
-
-Poppler should paint images with CAIRO_EXTEND_PAD
-https://bugs.freedesktop.org/show_bug.cgi?id=14578
---------------------------------------------------
-paint-source-alpha
-paint-with-alpha
-rotate-image-surface-paint
-scale-source-surface-paint
-
-Incorrect clipping of group object (regression?)
-https://bugs.freedesktop.org/show_bug.cgi?id=14580
---------------------------------------------------
-push-group
-
-spurious horizontal stripes in color gradients
-https://bugs.freedesktop.org/show_bug.cgi?id=10942
---------------------------------------------------
-smask 
-smask-fill 
-smask-image-mask 
-smask-mask 
-smask-paint 
-smask-stroke 
-smask-text
-
-Ghostscript does not correctly render small miters
-http://bugs.ghostscript.com/show_bug.cgi?id=690098
---------------------------------------------------
-miter-precision
+[Newest was closed in 2009.]
