@@ -282,6 +282,12 @@ _cairo_isdigit (int c)
     return (c >= '0' && c <= '9');
 }
 
+static inline int cairo_const
+_cairo_isalpha (int c)
+{
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
 #include "cairo-types-private.h"
 #include "cairo-cache-private.h"
 #include "cairo-reference-count-private.h"
@@ -1416,6 +1422,17 @@ _cairo_surface_show_text_glyphs (cairo_surface_t	    *surface,
 				 cairo_text_cluster_flags_t  cluster_flags,
 				 cairo_scaled_font_t	    *scaled_font,
 				 const cairo_clip_t		    *clip);
+
+cairo_private cairo_status_t
+_cairo_surface_tag (cairo_surface_t	        *surface,
+		    cairo_bool_t                 begin,
+		    const char                  *tag_name,
+		    const char                  *attributes,
+		    const cairo_pattern_t	*source,
+		    const cairo_stroke_style_t	*stroke_style,
+		    const cairo_matrix_t	*ctm,
+		    const cairo_matrix_t	*ctm_inverse,
+		    const cairo_clip_t	        *clip);
 
 cairo_private cairo_status_t
 _cairo_surface_acquire_source_image (cairo_surface_t         *surface,

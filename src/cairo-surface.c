@@ -2632,6 +2632,42 @@ _cairo_surface_show_text_glyphs (cairo_surface_t	    *surface,
     return _cairo_surface_set_error (surface, status);
 }
 
+cairo_status_t
+_cairo_surface_tag (cairo_surface_t	        *surface,
+		    cairo_bool_t                 begin,
+		    const char                  *tag_name,
+		    const char                  *attributes,
+		    const cairo_pattern_t	*source,
+		    const cairo_stroke_style_t	*stroke_style,
+		    const cairo_matrix_t	*ctm,
+		    const cairo_matrix_t	*ctm_inverse,
+		    const cairo_clip_t	        *clip)
+{
+    cairo_int_status_t status;
+
+    TRACE ((stderr, "%s\n", __FUNCTION__));
+    if (unlikely (surface->status))
+	return surface->status;
+    if (unlikely (surface->finished))
+	return _cairo_surface_set_error (surface, _cairo_error (CAIRO_STATUS_SURFACE_FINISHED));
+
+    if (surface->backend->tag == NULL)
+	return CAIRO_STATUS_SUCCESS;
+
+    if (begin) {
+	status = _pattern_has_error (source);
+	if (unlikely (status))
+	    return status;
+    }
+
+    status = surface->backend->tag (surface, begin, tag_name, attributes,
+				    source, stroke_style,
+				    ctm, ctm_inverse, clip);
+
+    return _cairo_surface_set_error (surface, status);
+}
+
+
 /**
  * _cairo_surface_set_resolution:
  * @surface: the surface
@@ -2728,6 +2764,7 @@ _cairo_surface_create_in_error (cairo_status_t status)
     case CAIRO_STATUS_PNG_ERROR:
     case CAIRO_STATUS_FREETYPE_ERROR:
     case CAIRO_STATUS_WIN32_GDI_ERROR:
+    case CAIRO_STATUS_TAG_ERROR:
     default:
 	_cairo_error_throw (CAIRO_STATUS_NO_MEMORY);
 	return (cairo_surface_t *) &_cairo_surface_nil;
