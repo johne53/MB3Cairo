@@ -634,6 +634,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\cairo-pdf-interchange.c"
+				>
+			</File>
+			<File
 				RelativePath="..\src\cairo-pdf-operators.c"
 				>
 			</File>
@@ -763,6 +767,14 @@
 			</File>
 			<File
 				RelativePath="..\src\cairo-svg-surface.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\cairo-tag-attributes.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\cairo-tag-stack.c"
 				>
 			</File>
 			<File
