@@ -1047,8 +1047,8 @@ cairo_pattern_create_mesh (void)
  * @pattern from being destroyed until a matching call to
  * cairo_pattern_destroy() is made.
  *
- * The number of references to a #cairo_pattern_t can be get using
- * cairo_pattern_get_reference_count().
+ * Use cairo_pattern_get_reference_count() to get the number of
+ * references to a #cairo_pattern_t.
  *
  * Return value: the referenced #cairo_pattern_t.
  *
@@ -1073,8 +1073,8 @@ slim_hidden_def (cairo_pattern_reference);
  * cairo_pattern_get_type:
  * @pattern: a #cairo_pattern_t
  *
- * This function returns the type a pattern.
- * See #cairo_pattern_type_t for available types.
+ * Get the pattern's type.  See #cairo_pattern_type_t for available
+ * types.
  *
  * Return value: The type of @pattern.
  *
