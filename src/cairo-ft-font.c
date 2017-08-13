@@ -174,6 +174,9 @@ struct _cairo_ft_unscaled_font {
     cairo_matrix_t current_shape;
     FT_Matrix Current_Shape;
 
+    unsigned int have_color_set : 1;
+    unsigned int have_color     : 1;  /* true if the font contains color glyphs */
+
     cairo_mutex_t mutex;
     int lock_count;
 
@@ -431,6 +434,9 @@ _cairo_ft_unscaled_font_init (cairo_ft_unscaled_font_t *unscaled,
     if (from_face) {
 	unscaled->from_face = TRUE;
 	_cairo_ft_unscaled_font_init_key (unscaled, TRUE, NULL, 0, face);
+
+        unscaled->have_color = FT_HAS_COLOR (face) != 0;
+        unscaled->have_color_set = TRUE;
     } else {
 	char *filename_copy;
 
@@ -442,6 +448,8 @@ _cairo_ft_unscaled_font_init (cairo_ft_unscaled_font_t *unscaled,
 	    return _cairo_error (CAIRO_STATUS_NO_MEMORY);
 
 	_cairo_ft_unscaled_font_init_key (unscaled, FALSE, filename_copy, id, NULL);
+
+        unscaled->have_color_set = FALSE;
     }
 
     unscaled->have_scale = FALSE;
@@ -708,6 +716,9 @@ _cairo_ft_unscaled_font_lock_face (cairo_ft_unscaled_font_t *unscaled)
     }
 
     unscaled->face = face;
+
+    unscaled->have_color = FT_HAS_COLOR (face) != 0;
+    unscaled->have_color_set = TRUE;
 
     font_map->num_open_faces++;
 
@@ -1249,6 +1260,15 @@ _get_bitmap_surface (FT_Bitmap		     *bitmap,
 
 	    memcpy (data, bitmap->buffer, stride * height);
 	}
+
+	if (!_cairo_is_little_endian ())
+	{
+	    /* Byteswap. */
+	    unsigned int i, count = height * width;
+	    uint32_t *p = (uint32_t *) data;
+	    for (i = 0; i < count; i++)
+		p[i] = be32_to_cpu (p[i]);
+	}
 	format = CAIRO_FORMAT_ARGB32;
 	break;
 #endif
@@ -1432,6 +1452,7 @@ _render_glyph_outline (FT_Face                    face,
 
 	(*surface) = (cairo_image_surface_t *)
 	    cairo_image_surface_create_for_data (NULL, format, 0, 0, 0);
+	pixman_image_set_component_alpha ((*surface)->pixman_image, TRUE);
 	if ((*surface)->base.status)
 	    return (*surface)->base.status;
     } else {
@@ -1656,6 +1677,10 @@ _transform_glyph_bitmap (cairo_matrix_t         * shape,
 
     old_image = (*surface);
     (*surface) = (cairo_image_surface_t *)image;
+
+    /* Note: we converted subpixel-rendered RGBA images to grayscale,
+     * so, no need to copy component alpha to new image. */
+
     cairo_surface_destroy (&old_image->base);
 
     cairo_surface_set_device_offset (&(*surface)->base,
@@ -2288,8 +2313,10 @@ _cairo_ft_scaled_glyph_init (void			*abstract_font,
     load_flags |= FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
 
     if ((info & CAIRO_SCALED_GLYPH_INFO_PATH) != 0 &&
-	(info & CAIRO_SCALED_GLYPH_INFO_SURFACE) == 0)
+	(info & (CAIRO_SCALED_GLYPH_INFO_SURFACE |
+                 CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE)) == 0) {
 	load_flags |= FT_LOAD_NO_BITMAP;
+    }
 
     /*
      * Don't pass FT_LOAD_VERTICAL_LAYOUT to FT_Load_Glyph here as
@@ -2301,17 +2328,7 @@ _cairo_ft_scaled_glyph_init (void			*abstract_font,
     }
 
 #ifdef FT_LOAD_COLOR
-    /* Color-glyph support:
-     *
-     * This flags needs plumbing through fontconfig (does it?), and
-     * maybe we should cache color and grayscale bitmaps separately
-     * such that users of the font (ie. the surface) can choose which
-     * version to use based on target content type.
-     *
-     * Moreover, none of our backends and compositors currently support
-     * color glyphs.  As such, this is currently disabled.
-     */
-    /* load_flags |= FT_LOAD_COLOR; */
+    load_flags |= FT_LOAD_COLOR;
 #endif
 
 
@@ -2425,7 +2442,8 @@ _cairo_ft_scaled_glyph_init (void			*abstract_font,
 					 &fs_metrics);
     }
 
-    if ((info & CAIRO_SCALED_GLYPH_INFO_SURFACE) != 0) {
+LOAD:
+    if (info & (CAIRO_SCALED_GLYPH_INFO_SURFACE | CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE)) {
 	cairo_image_surface_t	*surface;
 
 	if (!scaled_glyph_loaded) {
@@ -2453,17 +2471,38 @@ _cairo_ft_scaled_glyph_init (void			*abstract_font,
 	    {
 		status = _transform_glyph_bitmap (&unscaled->current_shape,
 						  &surface);
-		if (unlikely (status))
-		    cairo_surface_destroy (&surface->base);
-	    }
+                if (unlikely (status))
+                    cairo_surface_destroy (&surface->base);
+            }
 	}
 	if (unlikely (status))
 	    goto FAIL;
 
-	_cairo_scaled_glyph_set_surface (scaled_glyph,
-					 &scaled_font->base,
-					 surface);
+        if (pixman_image_get_format (surface->pixman_image) == PIXMAN_a8r8g8b8 &&
+            !pixman_image_get_component_alpha (surface->pixman_image)) {
+            _cairo_scaled_glyph_set_color_surface (scaled_glyph,
+                                                   &scaled_font->base,
+                                                   surface);
+        } else {
+            _cairo_scaled_glyph_set_surface (scaled_glyph,
+                                             &scaled_font->base,
+                                             surface);
+        }
     }
+
+#ifdef FT_LOAD_COLOR
+    if (((info & (CAIRO_SCALED_GLYPH_INFO_SURFACE | CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE)) != 0) &&
+        ((scaled_glyph->has_info & CAIRO_SCALED_GLYPH_INFO_SURFACE) == 0)) {
+        /*
+         * A kludge -- load again, without color.
+         * No need to load the metrics again, though
+         */
+	scaled_glyph_loaded = FALSE;
+        info &= ~CAIRO_SCALED_GLYPH_INFO_METRICS;
+        load_flags &= ~FT_LOAD_COLOR;
+        goto LOAD;
+    }
+#endif
 
     if (info & CAIRO_SCALED_GLYPH_INFO_PATH) {
 	cairo_path_fixed_t *path = NULL; /* hide compiler warning */
@@ -2472,7 +2511,7 @@ _cairo_ft_scaled_glyph_init (void			*abstract_font,
 	 * A kludge -- the above code will trash the outline,
 	 * so reload it. This will probably never occur though
 	 */
-	if ((info & CAIRO_SCALED_GLYPH_INFO_SURFACE) != 0) {
+	if ((info & (CAIRO_SCALED_GLYPH_INFO_SURFACE | CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE)) != 0) {
 	    scaled_glyph_loaded = FALSE;
 	    load_flags |= FT_LOAD_NO_BITMAP;
 	}
@@ -2807,6 +2846,20 @@ _cairo_ft_load_type1_data (void	            *abstract_font,
     return status;
 }
 
+static cairo_bool_t
+_cairo_ft_has_color_glyphs (void *scaled)
+{
+    cairo_ft_unscaled_font_t *unscaled = ((cairo_ft_scaled_font_t *)scaled)->unscaled;
+
+    if (!unscaled->have_color_set) {
+        FT_Face face;
+        face = _cairo_ft_unscaled_font_lock_face (unscaled);
+        _cairo_ft_unscaled_font_unlock_face (unscaled);
+    }
+
+    return unscaled->have_color;
+}
+
 static const cairo_scaled_font_backend_t _cairo_ft_scaled_font_backend = {
     CAIRO_FONT_TYPE_FT,
     _cairo_ft_scaled_font_fini,
@@ -2817,7 +2870,8 @@ static const cairo_scaled_font_backend_t _cairo_ft_scaled_font_backend = {
     _cairo_ft_index_to_ucs4,
     _cairo_ft_is_synthetic,
     _cairo_index_to_glyph_name,
-    _cairo_ft_load_type1_data
+    _cairo_ft_load_type1_data,
+    _cairo_ft_has_color_glyphs
 };
 
 /* #cairo_ft_font_face_t */
