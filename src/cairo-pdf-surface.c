@@ -387,6 +387,7 @@ _cairo_pdf_surface_create_for_stream_internal (cairo_output_stream_t	*output,
     _cairo_array_init (&surface->page_patterns, sizeof (cairo_pdf_pattern_t));
     _cairo_array_init (&surface->page_surfaces, sizeof (cairo_pdf_source_surface_t));
     _cairo_array_init (&surface->jbig2_global, sizeof (cairo_pdf_jbig2_global_t));
+    _cairo_array_init (&surface->page_heights, sizeof (double));
     surface->all_surfaces = _cairo_hash_table_create (_cairo_pdf_source_surface_equal);
     if (unlikely (surface->all_surfaces == NULL)) {
 	status = _cairo_error (CAIRO_STATUS_NO_MEMORY);
@@ -738,14 +739,15 @@ cairo_pdf_surface_set_size (cairo_surface_t	*surface,
  * @surface: a PDF #cairo_surface_t
  * @parent_id: the id of the parent item or %CAIRO_PDF_OUTLINE_ROOT if this is a top level item.
  * @utf8: the name of the outline
- * @dest: the name of the destination
+ * @link_attribs: the link attributes specifying where this outline links to
  * @flags: outline item flags
  *
- * Add an item to the document outline hierarchy with the name @utf8 that links to the
- * destinaton @dest. Destinations are created using
- * cairo_tag_begin()/cairo_tag_end() with the
- * %CAIRO_TAG_DEST. The item will be a child of the item with id @parent_id. Use %CAIRO_PDF_OUTLINE_ROOT
- * as the parent id of top level items.
+ * Add an item to the document outline hierarchy with the name @utf8
+ * that links to the location specified by @link_attribs. Link
+ * attributes have the same keys and values as the [Link Tag][link],
+ * excluding the "rect" attribute. The item will be a child of the
+ * item with id @parent_id. Use %CAIRO_PDF_OUTLINE_ROOT as the parent
+ * id of top level items.
  *
  * Return value: the id for the added item.
  *
@@ -755,7 +757,7 @@ int
 cairo_pdf_surface_add_outline (cairo_surface_t	         *surface,
 			       int                        parent_id,
 			       const char                *utf8,
-			       const char                *dest,
+			       const char                *link_attribs,
 			       cairo_pdf_outline_flags_t  flags)
 {
     cairo_pdf_surface_t *pdf_surface = NULL; /* hide compiler warning */
@@ -768,7 +770,7 @@ cairo_pdf_surface_add_outline (cairo_surface_t	         *surface,
     status = _cairo_pdf_interchange_add_outline (pdf_surface,
 						 parent_id,
 						 utf8,
-						 dest,
+						 link_attribs,
 						 flags,
 						 &id);
     if (status)
@@ -2313,6 +2315,7 @@ _cairo_pdf_surface_finish (void *abstract_surface)
 	    return _cairo_error (CAIRO_STATUS_JBIG2_GLOBAL_MISSING);
     }
     _cairo_array_fini (&surface->jbig2_global);
+    _cairo_array_fini (&surface->page_heights);
 
     size = _cairo_array_num_elements (&surface->page_labels);
     for (i = 0; i < size; i++) {
@@ -4876,7 +4879,14 @@ _cairo_pdf_surface_show_page (void *abstract_surface)
     cairo_pdf_surface_t *surface = abstract_surface;
     cairo_int_status_t status;
 
+    status = _cairo_array_append (&surface->page_heights, &surface->height);
+    if (unlikely (status))
+	return status;
+
     status = _cairo_array_append (&surface->page_labels, &surface->current_page_label);
+    if (unlikely (status))
+	return status;
+
     surface->current_page_label = NULL;
 
     status = _cairo_pdf_interchange_end_page_content (surface);
