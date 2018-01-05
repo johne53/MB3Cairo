@@ -881,6 +881,9 @@ _cairo_font_options_init_copy (cairo_font_options_t		*options,
 			       const cairo_font_options_t	*other);
 
 cairo_private void
+_cairo_font_options_fini (cairo_font_options_t *options);
+
+cairo_private void
 _cairo_font_options_set_lcd_filter (cairo_font_options_t   *options,
 				   cairo_lcd_filter_t  lcd_filter);
 
@@ -911,6 +914,9 @@ _cairo_validate_text_clusters (const char		   *utf8,
 			       const cairo_text_cluster_t  *clusters,
 			       int			    num_clusters,
 			       cairo_text_cluster_flags_t   cluster_flags);
+
+cairo_private unsigned long
+_cairo_string_hash (const char *str, int len);
 
 cairo_private cairo_status_t
 _cairo_intern_string (const char **str_inout, int len);
