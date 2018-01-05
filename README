@@ -187,6 +187,10 @@ Experimental surface backends
 	API stable, building against newer (or older) versions of skia
 	will probably fail.
 
+	(As of Jan 1, 2018 the skia backend is disabled.  Please contact
+	the Cairo maintainers if you are interested in using and/or
+	maintaining it.)
+
 
 Compiling
 =========
