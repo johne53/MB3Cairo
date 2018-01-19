@@ -456,6 +456,7 @@ _cairo_ft_unscaled_font_init (cairo_ft_unscaled_font_t *unscaled,
         unscaled->have_color = FT_HAS_COLOR (face) != 0;
         unscaled->have_color_set = TRUE;
 
+#ifdef HAVE_FT_GET_VAR_DESIGN_COORDINATES
 	{
 	    FT_MM_Var *ft_mm_var;
 	    if (0 == FT_Get_MM_Var (face, &ft_mm_var))
@@ -465,6 +466,7 @@ _cairo_ft_unscaled_font_init (cairo_ft_unscaled_font_t *unscaled,
 		    FT_Get_Var_Design_Coordinates (face, ft_mm_var->num_axis, unscaled->variations);
 	    }
 	}
+#endif
     } else {
 	char *filename_copy;
 
@@ -2368,6 +2370,7 @@ skip:
         }
 
         current_coords = malloc (sizeof (FT_Fixed) * ft_mm_var->num_axis);
+#ifdef HAVE_FT_GET_VAR_DESIGN_COORDINATES
         ret = FT_Get_Var_Design_Coordinates (face, ft_mm_var->num_axis, current_coords);
         if (ret == 0) {
             for (i = 0; i < ft_mm_var->num_axis; i++) {
@@ -2377,6 +2380,7 @@ skip:
             if (i == ft_mm_var->num_axis)
               goto done;
         }
+#endif
 
         FT_Set_Var_Design_Coordinates (face, ft_mm_var->num_axis, coords);
 done:
@@ -2852,7 +2856,11 @@ _cairo_ft_is_synthetic (void	        *abstract_font,
 
       cleanup:
 	free (coords);
+#if HAVE_FT_DONE_MM_VAR
+	FT_Done_MM_Var (face->glyph->library, mm_var);
+#else
 	free (mm_var);
+#endif
     }
 
     _cairo_ft_unscaled_font_unlock_face (unscaled);
