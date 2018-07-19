@@ -981,6 +981,11 @@ _compute_xrender_bitmap_size(FT_Bitmap      *target,
 	pitch = width * 4;
 	break;
 
+    case FT_PIXEL_MODE_BGRA:
+	/* each pixel is replicated into a 32-bit ARGB value */
+	pitch = width * 4;
+	break;
+
     default:  /* unsupported source format */
 	return -1;
     }
@@ -1138,7 +1143,7 @@ _fill_xrender_bitmap(FT_Bitmap      *target,
 	}
 	break;
 
-    default:  /* FT_PIXEL_MODE_LCD_V */
+    case FT_PIXEL_MODE_LCD_V:
 	/* convert vertical RGB into ARGB32 */
 	if (!bgr) {
 
@@ -1175,6 +1180,15 @@ _fill_xrender_bitmap(FT_Bitmap      *target,
 		}
 	    }
 	}
+	break;
+
+    case FT_PIXEL_MODE_BGRA:
+	for (h = height; h > 0; h--, srcLine += src_pitch, dstLine += pitch)
+	    memcpy (dstLine, srcLine, width * 4);
+	break;
+
+    default:
+	assert (0);
     }
 }
 
@@ -1280,7 +1294,6 @@ _get_bitmap_surface (FT_Bitmap		     *bitmap,
 	    component_alpha = TRUE;
 	}
 	break;
-#ifdef FT_LOAD_COLOR
     case FT_PIXEL_MODE_BGRA:
 	stride = width * 4;
 	if (own_buffer) {
@@ -1303,7 +1316,6 @@ _get_bitmap_surface (FT_Bitmap		     *bitmap,
 	}
 	format = CAIRO_FORMAT_ARGB32;
 	break;
-#endif
     case FT_PIXEL_MODE_GRAY2:
     case FT_PIXEL_MODE_GRAY4:
     convert:
@@ -2480,9 +2492,7 @@ _cairo_ft_scaled_glyph_init (void			*abstract_font,
 	vertical_layout = TRUE;
     }
 
-#ifdef FT_LOAD_COLOR
     load_flags |= FT_LOAD_COLOR;
-#endif
 
 
     if (info & CAIRO_SCALED_GLYPH_INFO_METRICS) {
@@ -2643,7 +2653,6 @@ LOAD:
         }
     }
 
-#ifdef FT_LOAD_COLOR
     if (((info & (CAIRO_SCALED_GLYPH_INFO_SURFACE | CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE)) != 0) &&
         ((scaled_glyph->has_info & CAIRO_SCALED_GLYPH_INFO_SURFACE) == 0)) {
         /*
@@ -2655,7 +2664,6 @@ LOAD:
         load_flags &= ~FT_LOAD_COLOR;
         goto LOAD;
     }
-#endif
 
     if (info & CAIRO_SCALED_GLYPH_INFO_PATH) {
 	cairo_path_fixed_t *path = NULL; /* hide compiler warning */
