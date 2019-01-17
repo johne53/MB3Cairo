@@ -1510,6 +1510,8 @@ _format_to_string (cairo_format_t format)
 #define f(name) case CAIRO_FORMAT_ ## name: return #name
     switch (format) {
 	f(INVALID);
+	f(RGBA128F);
+	f(RGB96F);
 	f(ARGB32);
 	f(RGB30);
 	f(RGB24);
@@ -1527,8 +1529,10 @@ _format_to_content_string (cairo_format_t format)
     switch (format) {
     case CAIRO_FORMAT_INVALID:
 	return "INVALID";
+    case CAIRO_FORMAT_RGBA128F:
     case CAIRO_FORMAT_ARGB32:
 	return "COLOR_ALPHA";
+    case CAIRO_FORMAT_RGB96F:
     case CAIRO_FORMAT_RGB30:
     case CAIRO_FORMAT_RGB24:
     case CAIRO_FORMAT_RGB16_565:
@@ -1673,6 +1677,8 @@ _emit_image (cairo_surface_t *image,
     case CAIRO_FORMAT_RGB30:
     case CAIRO_FORMAT_INVALID:
     case CAIRO_FORMAT_ARGB32: len = 4*width; break;
+    case CAIRO_FORMAT_RGB96F: len = 12*width; break;
+    case CAIRO_FORMAT_RGBA128F: len = 16*width; break;
     }
 
     _trace_printf ("  /source ");
@@ -1680,24 +1686,6 @@ _emit_image (cairo_surface_t *image,
 
 #ifdef WORDS_BIGENDIAN
     switch (format) {
-    case CAIRO_FORMAT_A1:
-	for (row = height; row--; ) {
-	    _write_data (&stream, data, (width+7)/8);
-	    data += stride;
-	}
-	break;
-    case CAIRO_FORMAT_A8:
-	for (row = height; row--; ) {
-	    _write_data (&stream, data, width);
-	    data += stride;
-	}
-	break;
-    case CAIRO_FORMAT_RGB16_565:
-	for (row = height; row--; ) {
-	    _write_data (&stream, data, 2*width);
-	    data += stride;
-	}
-	break;
     case CAIRO_FORMAT_RGB24:
 	for (row = height; row--; ) {
 	    int col;
@@ -1709,10 +1697,15 @@ _emit_image (cairo_surface_t *image,
 	    data += stride;
 	}
 	break;
+    case CAIRO_FORMAT_A1:
+    case CAIRO_FORMAT_A8:
+    case CAIRO_FORMAT_RGB16_565:
     case CAIRO_FORMAT_RGB30:
     case CAIRO_FORMAT_ARGB32:
+    case CAIRO_FORMAT_RGB96F:
+    case CAIRO_FORMAT_RGBA128F:
 	for (row = height; row--; ) {
-	    _write_data (&stream, data, 4*width);
+	    _write_data (&stream, data, len);
 	    data += stride;
 	}
 	break;
@@ -1769,6 +1762,8 @@ _emit_image (cairo_surface_t *image,
 	    data += stride;
 	}
 	break;
+    case CAIRO_FORMAT_RGB96F:
+    case CAIRO_FORMAT_RGBA128F:
     case CAIRO_FORMAT_RGB30:
     case CAIRO_FORMAT_ARGB32:
 	for (row = height; row--; ) {
@@ -1777,11 +1772,11 @@ _emit_image (cairo_surface_t *image,
 	    int col;
 	    for (col = 0; col < width; col++)
 		dst[col] = bswap_32 (src[col]);
-	    _write_data (&stream, rowdata, 4*width);
+	    _write_data (&stream, rowdata, len);
 	    data += stride;
 	}
 	break;
-    case CAIRO_FORMAT_INVALID:
+   case CAIRO_FORMAT_INVALID:
     default:
 	break;
     }
