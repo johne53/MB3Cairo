@@ -35,6 +35,7 @@ stamp-h.in
 *.rej
 *-uninstalled.pc
 .vimrc
+gtk-doc.m4
 
 /src/cairo-win32-system.c
 /src/cairo-win32-debug.c
