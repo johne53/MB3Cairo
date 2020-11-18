@@ -1,6 +1,6 @@
 project('cairo', 'c', 'cpp',
-  meson_version: '>= 0.50.0',
-  version: '1.17.3',
+  meson_version: '>= 0.54.0',
+  version: run_command(find_program('version.py'), check: true).stdout().strip(),
 )
 
 cc = meson.get_compiler('c')
@@ -22,6 +22,18 @@ if cc.get_id() == 'msvc'
                         # Don't warn about double -> float truncation
                         '/wd4305',
                         language : 'c')
+endif
+
+# Make sure source directory hasn't been configured with autotools
+if meson.version().version_compare('>= 0.53')
+  fs = import('fs')
+  if fs.exists('config.h') or fs.exists('src/cairo-features.h') or fs.exists('src/cairo-supported-features.h')
+    error('''
+          The source directory '@0@' appears to contain
+          autotools configuration artifacts. This can cause difficult to
+          debug build problems. Please clean it up and then re-run meson.
+          '''.format(meson.source_root()))
+  endif
 endif
 
 pkgmod = import('pkgconfig')
@@ -142,7 +154,7 @@ endif
 
 png_dep = dependency('libpng',
   required: get_option('png'),
-  fallback: ['libpng', 'png_dep']
+  fallback: ['libpng', 'libpng_dep']
 )
 if png_dep.found()
   feature_conf.set('CAIRO_HAS_SVG_SURFACE', 1)
@@ -151,12 +163,12 @@ if png_dep.found()
     {
       'name': 'cairo-png',
       'description': 'PNG functions',
-      'requires': 'libpng',
+      'deps': [png_dep],
     },
     {
       'name': 'cairo-svg',
       'description': 'SVG surface backend',
-      'requires': 'libpng',
+      'deps': [png_dep],
     }
   ]
 
@@ -164,43 +176,6 @@ if png_dep.found()
     internal_deps += [png_dep]
   else
     deps += [png_dep]
-  endif
-endif
-
-freetype_dep = dependency('freetype2',
-  required: get_option('freetype'),
-  version: freetype_required_version,
-  fallback: ['freetype2', 'freetype_dep'],
-)
-if freetype_dep.found()
-  feature_conf.set('CAIRO_HAS_FT_FONT', 1)
-  built_features += [{
-    'name': 'cairo-ft',
-    'description': 'Freetype font backend',
-    'requires': 'freetype2 @0@'.format(freetype_required_version)
-  }]
-
-  ft_check_funcs = [
-    'FT_Get_X11_Font_Format',
-    'FT_GlyphSlot_Embolden',
-    'FT_GlyphSlot_Oblique',
-    'FT_Load_Sfnt_Table',
-    'FT_Library_SetLcdFilter',
-    'FT_Get_Var_Design_Coordinates',
-    'FT_Done_MM_Var',
-  ]
-
-  if freetype_dep.type_name() == 'internal'
-    foreach func : ft_check_funcs
-      conf.set('HAVE_@0@'.format(func.to_upper()), 1)
-    endforeach
-    internal_deps += [freetype_dep]
-  else
-    if not cc.links(files('meson-cc-tests/ft_has_color.c'), dependencies: freetype_dep, name: 'FT has color')
-      conf.set('FT_HAS_COLOR', '(0)')
-    endif
-    check_funcs += ft_check_funcs
-    deps += [freetype_dep]
   endif
 endif
 
@@ -229,8 +204,47 @@ if fontconfig_dep.found()
   built_features += [{
     'name': 'cairo-fc',
     'description': 'Fontconfig font backend',
-    'requires': 'fontconfig @0@'.format(fontconfig_required_version)
+    'deps': [fontconfig_dep],
   }]
+endif
+
+freetype_dep = dependency('freetype2',
+  required: get_option('freetype'),
+  version: freetype_required_version,
+  fallback: ['freetype2', 'freetype_dep'],
+)
+if freetype_dep.found()
+  feature_conf.set('CAIRO_HAS_FT_FONT', 1)
+  built_features += [{
+    'name': 'cairo-ft',
+    'description': 'Freetype font backend',
+    'deps': [freetype_dep],
+    # cairo-ft.h includes fontconfig.h so it needs its cflags
+    'compile-deps': [fontconfig_dep.partial_dependency(compile_args: true, includes: true)],
+  }]
+
+  ft_check_funcs = [
+    'FT_Get_X11_Font_Format',
+    'FT_GlyphSlot_Embolden',
+    'FT_GlyphSlot_Oblique',
+    'FT_Load_Sfnt_Table',
+    'FT_Library_SetLcdFilter',
+    'FT_Get_Var_Design_Coordinates',
+    'FT_Done_MM_Var',
+  ]
+
+  if freetype_dep.type_name() == 'internal'
+    foreach func : ft_check_funcs
+      conf.set('HAVE_@0@'.format(func.to_upper()), 1)
+    endforeach
+    internal_deps += [freetype_dep]
+  else
+    if not cc.links(files('meson-cc-tests/ft_has_color.c'), dependencies: freetype_dep, name: 'FT has color')
+      conf.set('FT_HAS_COLOR', '(0)')
+    endif
+    check_funcs += ft_check_funcs
+    deps += [freetype_dep]
+  endif
 endif
 
 x11_dep = dependency('x11', required: get_option('xlib'))
@@ -240,7 +254,7 @@ if x11_dep.found() and xext_dep.found()
   built_features += [{
     'name': 'cairo-xlib',
     'description': 'Xlib surface backend',
-    'requires': 'x11 xext',
+    'deps': [x11_dep, xext_dep],
   }]
 
   extra_headers = ['X11/Xlibint.h', 'X11/Xproto.h']
@@ -276,7 +290,7 @@ if feature_conf.get('CAIRO_HAS_XLIB_SURFACE', 0) == 1
     built_features += [{
       'name': 'cairo-xlib-xrender',
       'description': 'Xlib Xrender surface backend',
-      'requires': 'xrender @0@'.format(xrender_required_version),
+      'deps': [xrender_dep],
     }]
     feature_conf.set('CAIRO_HAS_XLIB_XRENDER_SURFACE', 1)
   endif
@@ -291,7 +305,7 @@ if xcb_dep.found() and xcb_render_dep.found()
   built_features += [{
     'name': 'cairo-xcb',
     'description': 'XCB surface backend',
-    'requires': 'xcb @0@ xcb-render @1@'.format(xcb_required_version, xcb_render_required_version),
+    'deps': [xcb_dep, xcb_render_dep],
   }]
 
   deps += [xcb_dep, xcb_render_dep]
@@ -306,7 +320,7 @@ if feature_conf.get('CAIRO_HAS_XCB_SURFACE', 0) == 1 and feature_conf.get('CAIRO
     built_features += [{
       'name': 'cairo-xlib-xcb',
       'description': 'Xlib/XCB functions',
-      'requires': 'x11-xcb',
+      'deps': [x11xcb_dep],
     }]
   endif
 endif
@@ -319,7 +333,7 @@ if feature_conf.get('CAIRO_HAS_XCB_SURFACE', 0) == 1
     built_features += [{
       'name': 'cairo-xcb-shm',
       'description': 'XCB/SHM functions',
-      'requires': 'xcb-shm',
+      'deps': [xcbshm_dep],
     }]
   endif
 endif
@@ -332,13 +346,10 @@ if qtgui_dep.found() and false
   built_features += [{
     'name': 'cairo-qt',
     'description': 'Qt surface backend',
-    'requires': 'QtGui @0@'.format(qtgui_required_version),
-    'libs': qtgui_extra_libs,
+    'deps': [qtgui_dep],
   }]
 
   deps += [qtgui_dep]
-  qtgui_extra_libs = ['-lstdc++']
-  extra_link_args += qtgui_extra_libs
 endif
 
 # Untested
@@ -375,27 +386,28 @@ if cc.has_header('ApplicationServices/ApplicationServices.h')
 endif
 
 if host_machine.system() == 'windows'
-  win32_extra_libs = []
-  foreach libname: ['gdi32', 'msimg32']
-    deps += [cc.find_library(libname)]
-    win32_extra_libs += ['-l' + libname]
-  endforeach
+  win32_extra_deps = [
+    cc.find_library('gdi32'),
+    cc.find_library('msimg32'),
+  ]
+
+  deps += win32_extra_deps
 
   feature_conf.set('CAIRO_HAS_WIN32_SURFACE', 1)
-  built_features += [{
-    'name': 'cairo-win32',
-    'description': 'Microsoft Windows surface backend',
-    'libs': win32_extra_libs,
-  }]
-endif
-
-if feature_conf.get('CAIRO_HAS_WIN32_SURFACE', 0) == 1
   feature_conf.set('CAIRO_HAS_WIN32_FONT', 1)
-  built_features += [{
-    'name': 'cairo-win32-font',
-    'description': 'Microsoft Windows font backend',
-    'libs': win32_extra_libs,
-  }]
+
+  built_features += [
+    {
+      'name': 'cairo-win32',
+      'description': 'Microsoft Windows surface backend',
+      'deps': win32_extra_deps,
+    },
+    {
+      'name': 'cairo-win32-font',
+      'description': 'Microsoft Windows font backend',
+      'deps': win32_extra_deps,
+    }
+  ]
 endif
 
 # FIXME: Doesn't build since at least 2011
@@ -410,7 +422,7 @@ if libudev_dep.found() and libdrm_dep.found() and false
   built_features += [{
     'name': 'cairo-drm',
     'description': 'DRM surface backend',
-    'requires': 'libudev @0@ libdrm @1@'.format(libudev_required_version, libdrm_required_version),
+    'deps': [libudev_dep, libdrm_dep],
   }]
 endif
 
@@ -420,61 +432,42 @@ endif
 
 # GL / GLESV2 / GLESV3 are mutually exclusive
 gl_backend = get_option('gl-backend')
-use_gl = false
 need_egl_functions = false
 need_wgl_functions = false
 need_glx_functions = false
 
 if gl_backend in ['auto', 'gl']
-  gl_dep = dependency('gl', required: gl_backend == 'gl')
+  gl_dep = dependency('gl', required: false)
   if not gl_dep.found()
-    if cc.has_header('GL/gl.h')
-      gl_extra_libs = ['-lGL']
-      gl_requires = ''
-      extra_link_args += gl_extra_libs
-      use_gl = true
-    endif
-  elif cc.has_header('GL/gl.h', dependencies: gl_dep) and cc.has_header('GL/glext.h', dependencies: gl_dep)
-    use_gl = true
-    gl_extra_libs = []
-    gl_requires = 'gl'
-    deps += [gl_dep]
+    gl_dep = cc.find_library('GL', required: gl_backend == 'gl')
   endif
-endif
+  if gl_dep.found() and \
+     cc.has_header('GL/gl.h', required: gl_backend == 'gl', dependencies: gl_dep) and \
+     cc.has_header('GL/glext.h', required: gl_backend == 'gl', dependencies: gl_dep)
+    deps += [gl_dep]
 
+    need_egl_functions = true
+    need_wgl_functions = true
+    need_glx_functions = true
 
-if use_gl
-  need_egl_functions = true
-  need_wgl_functions = true
-  need_glx_functions = true
-
-  feature_conf.set('CAIRO_HAS_GL_SURFACE', 1)
-  built_features += [{
-    'name': 'cairo-gl',
-    'description': 'OpenGL surface backend',
-    'requires': gl_requires,
-    'libs': gl_extra_libs,
-  }]
+    feature_conf.set('CAIRO_HAS_GL_SURFACE', 1)
+    built_features += [{
+      'name': 'cairo-gl',
+      'description': 'OpenGL surface backend',
+      'deps': [gl_dep],
+    }]
+  endif
 endif
 
 if feature_conf.get('CAIRO_HAS_GL_SURFACE', 0) == 0 and ['auto', 'glesv2'].contains(gl_backend)
-  use_glesv2 = false
-  glesv2_dep = dependency('glesv2', required: gl_backend == 'glesv2')
+  glesv2_dep = dependency('glesv2', required: false)
   if not glesv2_dep.found()
-    if cc.has_header('GLES2/gl2.h')
-      use_glesv2 = true
-      glesv2_extra_libs = ['-lGLESv2']
-      glesv2_requires = ''
-      extra_link_args += glesv2_extra_libs
-    endif
-  else
-    glesv2_extra_libs = []
-    glesv2_requires = 'glesv2'
-    use_glesv2 = true
-    deps += [glesv2_dep]
+    glesv2_dep = cc.find_library('GLESv2', required: gl_backend == 'glesv2')
   endif
-
-  if use_glesv2
+  if glesv2_dep.found() and \
+     cc.has_header('GLES2/gl2.h', required: gl_backend == 'glesv2', dependencies: glesv2_dep) and \
+     cc.has_header('GLES2/gl2ext.h', required: gl_backend == 'glesv2', dependencies: glesv2_dep)
+    deps += [glesv2_dep]
     need_egl_functions = true
 
     feature_conf.set('CAIRO_HAS_GLESV2_SURFACE', 1)
@@ -482,30 +475,22 @@ if feature_conf.get('CAIRO_HAS_GL_SURFACE', 0) == 0 and ['auto', 'glesv2'].conta
       'name': 'cairo-glesv2',
       'source-key': 'cairo-gl',
       'description': 'OpenGLESv2 surface backend',
-      'requires': glesv2_requires,
-      'libs': glesv2_extra_libs,
+      'deps': [glesv2_dep],
     }]
   endif
 endif
 
 if feature_conf.get('CAIRO_HAS_GL_SURFACE', 0) == 0 and feature_conf.get('CAIRO_HAS_GLESV2_SURFACE', 0) == 0 and ['auto', 'glesv3'].contains(gl_backend)
-  use_glesv3 = false
   # glesv3 is provided via libGLESv2.so (there is no libGLESv3, nor glesv3.pc)
-  glesv3_dep = dependency('glesv2', required: gl_backend == 'glesv3')
-  if cc.has_header('GLES3/gl3.h', dependencies: glesv3_dep)
-    use_glesv3 = true
-    if not glesv3_dep.found()
-      glesv3_extra_libs = ['-lGLESv2']
-      extra_link_args += glesv3_extra_libs
-      glesv3_requires = ''
-    else
-      glesv3_extra_libs = []
-      glesv3_requires = 'glesv2'
-      deps += [glesv3_dep]
-    endif
+  glesv3_dep = dependency('glesv2', required: false)
+  if not glesv3_dep.found()
+    glesv3_dep = cc.find_library('GLESv2', required: gl_backend == 'glesv3')
   endif
 
-  if use_glesv3
+  if glesv3_dep.found() and \
+     cc.has_header('GLES3/gl3.h', required: gl_backend == 'glesv3', dependencies: glesv3_dep) and \
+     cc.has_header('GLES3/gl3ext.h', required: gl_backend == 'glesv3', dependencies: glesv3_dep)
+    deps += [glesv3_dep]
     need_egl_functions = true
 
     feature_conf.set('CAIRO_HAS_GLESV3_SURFACE', 1)
@@ -513,8 +498,7 @@ if feature_conf.get('CAIRO_HAS_GL_SURFACE', 0) == 0 and feature_conf.get('CAIRO_
       'name': 'cairo-glesv3',
       'source-key': 'cairo-gl',
       'description': 'OpenGLESv3 surface backend',
-      'requires': glesv3_requires,
-      'libs': glesv3_extra_libs,
+      'deps': [glesv3_dep],
     }]
   endif
 endif
@@ -530,7 +514,7 @@ if cogl_dep.found()
   built_features += [{
     'name': 'cairo-cogl',
     'description': 'Cogl surface backend',
-    'requires': 'cogl-2.0-experimental',
+    'deps': [cogl_dep],
   }]
 endif
 
@@ -543,16 +527,15 @@ if directfb_dep.found()
   built_features += [{
     'name': 'cairo-directfb',
     'description': 'directfb surface backend',
-    'requires': 'directfb',
+    'deps': [directfb_dep],
   }]
 endif
 
 # Untested
 openvg_dep = cc.find_library('OpenVG', has_headers: 'VG/openvg.h', required: get_option('openvg'))
 if openvg_dep.found()
-  # can we use the dep here somehow instead?
-  openvg_extra_libs = ['-lOpenVG']
-  extra_link_args += openvg_extra_libs
+  deps += [openvg_dep]
+
   need_egl_functions = true
   need_glx_functions = true
 
@@ -560,49 +543,38 @@ if openvg_dep.found()
   built_features += [{
     'name': 'cairo-vg',
     'description': 'OpenVG surface backend',
-    'libs': openvg_extra_libs,
+    'deps': [openvg_dep],
   }]
 endif
 
 if need_egl_functions
   # FIXME: automagic
+  egl_extra_deps = []
   egl_dep = dependency('egl', required: false)
-  use_egl = false
-  egl_extra_libs = []
-  egl_requires = ''
-
   if not egl_dep.found()
     if cc.has_header('EGL/egl.h')
-      egl_extra_deps = []
       csi_dep = cc.find_library('csi', required: false)
       if csi_dep.found() and cc.has_function('csi_stream_attachresource', dependencies: [csi_dep])
-        egl_extra_deps = [csi_dep]
-        egl_extra_libs = ['-lcsi']
+        egl_extra_deps += csi_dep
       endif
 
       foreach libname : ['EGL', 'egl13', 'egl12', 'egl11']
         dep = cc.find_library(libname, required: false)
         if dep.found() and cc.has_function('eglGetError', dependencies: [dep])
-          deps += [dep] + egl_extra_deps
-          egl_extra_libs += ['-l@0@'.format(libname)]
-          use_egl = true
+          egl_dep = dep
           break
         endif
       endforeach
     endif
-  else
-    use_egl = true
-    egl_requires = 'egl'
-    deps += [egl_dep]
   endif
 
-  if use_egl
+  if egl_dep.found()
+    deps += egl_dep
     feature_conf.set('CAIRO_HAS_EGL_FUNCTIONS', 1)
     built_features += [{
       'name': 'cairo-egl',
       'description': 'EGL functions',
-      'libs': egl_extra_libs,
-      'requires': egl_requires,
+      'deps': [egl_dep] + egl_extra_deps,
     }]
   endif
 endif
@@ -614,7 +586,7 @@ if need_glx_functions
     built_features += [{
       'name': 'cairo-glx',
       'description': 'GLX functions',
-      'libs': ['-lGL'],
+      'deps': [cc.find_library('GL')],
     }]
   endif
 endif
@@ -642,12 +614,6 @@ glib_dep = dependency('glib-2.0',
 )
 if gobject_dep.found() and glib_dep.found()
   feature_conf.set('CAIRO_HAS_GOBJECT_FUNCTIONS', 1)
-  built_features += [{
-    'name': 'cairo-gobject',
-    'description': 'gobject functions',
-    'requires': 'gobject-2.0 glib-2.0 @0@'.format(glib_required_version),
-    'libs': ['-lcairo-gobject'],
-  }]
 endif
 
 if zlib_dep.found()
@@ -655,7 +621,7 @@ if zlib_dep.found()
   built_features += [{
     'name': 'cairo-script',
     'description': 'script surface backend',
-    'requires': 'zlib',
+    'deps': [zlib_dep],
   }]
 endif
 
@@ -664,7 +630,7 @@ if zlib_dep.found()
   built_features += [{
     'name': 'cairo-ps',
     'description': 'PostScript surface backend',
-    'requires': 'zlib',
+    'deps': [zlib_dep],
   }]
 endif
 
@@ -673,7 +639,7 @@ if zlib_dep.found()
   built_features += [{
     'name': 'cairo-pdf',
     'description': 'PDF surface backend',
-    'requires': 'zlib',
+    'deps': [zlib_dep],
   }]
 endif
 
@@ -687,7 +653,7 @@ if zlib_dep.found() and png_dep.found()
   built_features += [{
     'name': 'cairo-xml',
     'description': 'XML surface backend',
-    'requires': 'zlib',
+    'deps': [zlib_dep],
   }]
 endif
 
@@ -899,29 +865,20 @@ endif
 configure_file(output: 'config.h', configuration: conf)
 
 foreach feature: built_features
-  fconf = configuration_data()
-  fconf.set('prefix', get_option('prefix'))
-  fconf.set('exec_prefix', '${prefix}')
-  fconf.set('libdir', '${exec_prefix}/@0@'.format(get_option('libdir')))
-  fconf.set('includedir', '${prefix}/@0@'.format(get_option('includedir')))
-  fconf.set('FEATURE_PC', feature['name'])
-  fconf.set('FEATURE_NAME', feature['description'])
-  fconf.set('VERSION', meson.project_version())
-  fconf.set('FEATURE_BASE', meson.project_name())
-  fconf.set('FEATURE_REQUIRES', feature.get('requires', ''))
-  fconf.set('FEATURE_NONPKGCONFIG_LIBS', ' '.join(feature.get('libs', [])))
-  fconf.set('FEATURE_NONPKGCONFIG_EXTRA_LIBS', '')
-  fconf.set('FEATURE_NONPKGCONFIG_CFLAGS', '')
-
-  configure_file(input: 'src/cairo-features.pc.in',
-    output: '@0@.pc'.format(feature['name']),
-    configuration: fconf,
-    install: true,
-    install_dir: join_paths(get_option('prefix'), get_option('libdir'), 'pkgconfig')
+  feature_deps = feature.get('deps', [])
+  feature_libs = feature.get('libs', [])
+  feature_compile_deps = feature.get('compile-deps', [])
+  pkgmod.generate(libraries: [libcairo] + feature_deps + feature_libs,
+    name: feature['name'],
+    description: feature['description'] + ' for cairo graphics library',
+  )
+  meson.override_dependency(feature['name'],
+    declare_dependency(link_with: libcairo,
+      dependencies: feature_deps + feature_compile_deps,
+      link_args: feature_libs,
+    )
   )
 endforeach
-
-install_headers('cairo-version.h', subdir: 'cairo')
 
 # summary
 if meson.version().version_compare('>= 0.53')

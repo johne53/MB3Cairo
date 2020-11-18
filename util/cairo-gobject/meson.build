@@ -20,6 +20,15 @@ libcairogobject = library('cairo-gobject', cairo_gobject_sources,
 incgobject = include_directories('.')
 
 libcairogobject_dep = declare_dependency(link_with: libcairogobject,
-  include_directories: [incbase, incgobject])
+  include_directories: [incgobject],
+  dependencies: libcairo_dep)
+
+pkgmod.generate(libcairogobject,
+  libraries: [libcairo, glib_dep, gobject_dep],
+  description: 'cairo-gobject for cairo graphics library',
+  subdirs: [meson.project_name()],
+)
+
+meson.override_dependency('cairo-gobject', libcairogobject_dep)
 
 install_headers(cairo_gobject_headers, subdir: 'cairo')
