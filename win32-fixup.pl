@@ -1,5 +1,5 @@
 #! e:/program files/perl/bin/perl.exe
-#  version info can be found in 'cairo-version.h'
+#  version info can be found in 'NEWS'
 
 require "../local-paths.lib";
 
