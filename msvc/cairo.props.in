@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets">
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros">
+    <DllPrefix>lib</DllPrefix>
+    <DllSuffix>-2</DllSuffix>
+    <GlibBuildRootFolder>@GlibBuildRootFolder@</GlibBuildRootFolder>
+    <GenericIncludeFolder>@GenericIncludeFolder@</GenericIncludeFolder>
+    <GenericLibraryFolder>@GenericLibraryFolder@</GenericLibraryFolder>
+    <GenericWin32LibraryFolder>@GenericWin32LibraryFolder@</GenericWin32LibraryFolder>
+    <GenericWin32BinaryFolder>@GenericWin32BinaryFolder@</GenericWin32BinaryFolder>
+    <Debug32TestSuiteFolder>@Debug32TestSuiteFolder@</Debug32TestSuiteFolder>
+    <Release32TestSuiteFolder>@Release32TestSuiteFolder@</Release32TestSuiteFolder>
+    <Debug32TargetFolder>@Debug32TargetFolder@</Debug32TargetFolder>
+    <Release32TargetFolder>@Release32TargetFolder@</Release32TargetFolder>
+    <GenericWin64LibraryFolder>@GenericWin64LibraryFolder@</GenericWin64LibraryFolder>
+    <GenericWin64BinaryFolder>@GenericWin64BinaryFolder@</GenericWin64BinaryFolder>
+    <Debug64TestSuiteFolder>@Debug64TestSuiteFolder@</Debug64TestSuiteFolder>
+    <Release64TestSuiteFolder>@Release64TestSuiteFolder@</Release64TestSuiteFolder>
+    <Debug64TargetFolder>@Debug64TargetFolder@</Debug64TargetFolder>
+    <Release64TargetFolder>@Release64TargetFolder@</Release64TargetFolder>
+    <TargetSxSFolder>F:\+GTK-SOURCES\gnu-windows\include\ardourext\sys</TargetSxSFolder>
+    <LibraryExt>@LibraryExt@</LibraryExt>
+  </PropertyGroup>
+  <PropertyGroup>
+    <_ProjectFileVersion>14.0.25420.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup />
+  <ItemGroup>
+    <BuildMacro Include="DllPrefix">
+      <Value>$(DllPrefix)</Value>
+    </BuildMacro>
+    <BuildMacro Include="DllSuffix">
+      <Value>$(DllSuffix)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GlibBuildRootFolder">
+      <Value>$(GlibBuildRootFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GenericIncludeFolder">
+      <Value>$(GenericIncludeFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GenericLibraryFolder">
+      <Value>$(GenericLibraryFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GenericWin32LibraryFolder">
+      <Value>$(GenericWin32LibraryFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GenericWin32BinaryFolder">
+      <Value>$(GenericWin32BinaryFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="Debug32TestSuiteFolder">
+      <Value>$(Debug32TestSuiteFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="Release32TestSuiteFolder">
+      <Value>$(Release32TestSuiteFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="Debug32TargetFolder">
+      <Value>$(Debug32TargetFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="Release32TargetFolder">
+      <Value>$(Release32TargetFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GenericWin64LibraryFolder">
+      <Value>$(GenericWin64LibraryFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GenericWin64BinaryFolder">
+      <Value>$(GenericWin64BinaryFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="Debug64TestSuiteFolder">
+      <Value>$(Debug64TestSuiteFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="Release64TestSuiteFolder">
+      <Value>$(Release64TestSuiteFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="Debug64TargetFolder">
+      <Value>$(Debug64TargetFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="Release64TargetFolder">
+      <Value>$(Release64TargetFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="TargetSxSFolder">
+      <Value>$(TargetSxSFolder)</Value>
+    </BuildMacro>
+    <BuildMacro Include="LibraryExt">
+      <Value>$(LibraryExt)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
