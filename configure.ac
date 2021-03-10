@@ -2,7 +2,7 @@ AC_PREREQ([2.63])
 CAIRO_PARSE_VERSION
 AC_INIT([cairo],
 	[cairo_version_major.cairo_version_minor.cairo_version_micro],
-	[https://bugs.freedesktop.org/enter_bug.cgi?product=cairo],
+	[https://gitlab.freedesktop.org/cairo/cairo/-/issues],
 	[cairo],
 	[https://cairographics.org/])
 AC_CONFIG_AUX_DIR(build)
@@ -98,7 +98,7 @@ CAIRO_ENABLE_SURFACE_BACKEND(xlib, Xlib, auto, [
 
   if test "$ac_cv_header_sys_ipc_h" = "yes" -a "$ac_cv_header_sys_shm_h" = "yes"; then
       AC_MSG_CHECKING(whether shmctl IPC_RMID allowes subsequent attaches)
-      AC_TRY_RUN([
+      AC_RUN_IFELSE([AC_LANG_SOURCE([[
 		  #include <sys/types.h>
 		  #include <sys/ipc.h>
 		  #include <sys/shm.h>
@@ -117,12 +117,11 @@ CAIRO_ENABLE_SURFACE_BACKEND(xlib, Xlib, auto, [
 		      shmdt (shmaddr);
 		      return 0;
 		  }
-		  ],
-		  AC_DEFINE(IPC_RMID_DEFERRED_RELEASE, 1,
-			    [Define to 1 if shared memory segments are released deferred.])
-		  AC_MSG_RESULT(yes),
-		  AC_MSG_RESULT(no),
-		  AC_MSG_RESULT(assuming no))
+		  ]])],
+		  [
+		  	AC_DEFINE(IPC_RMID_DEFERRED_RELEASE, 1, Define to 1 if shared memory segments are released deferred.)
+		  	AC_MSG_RESULT(yes)],
+		  [AC_MSG_RESULT(no)],[AC_MSG_RESULT(assuming no)])
       fi
 
       AC_CHECK_HEADERS([X11/extensions/XShm.h X11/extensions/shmproto.h X11/extensions/shmstr.h], [], [],
@@ -715,8 +714,12 @@ CAIRO_ENABLE_SURFACE_BACKEND(recording, recording, always)
 CAIRO_ENABLE_SURFACE_BACKEND(observer, observer, always)
 CAIRO_ENABLE_SURFACE_BACKEND(tee, tee, no)
 CAIRO_ENABLE_SURFACE_BACKEND(xml, xml, no, [
-    use_xml=$have_libz
-    xml_NONPKGCONFIG_LIBS=-lz
+    if test "x$use_png" != "xyes"; then
+        use_xml="no (requires --enable-png)"
+    else
+        use_xml=$have_libz
+        xml_NONPKGCONFIG_LIBS=-lz
+    fi
 ])
 
 dnl ===========================================================================
@@ -823,7 +826,13 @@ CAIRO_ENABLE(interpreter, cairo-script-interpreter, yes, [
 AC_CHECK_LIB(bfd, bfd_openr,
 	 [AC_CHECK_HEADER(bfd.h, [have_bfd=yes],
 	 [have_bfd=no])], [have_bfd=no])
-AC_CHECK_HEADER(libiberty.h,, [have_bfd=no])
+dnl bfd_section_flags is an inline func so we don't bother with linking the lib in
+AC_LINK_IFELSE([AC_LANG_PROGRAM([
+  #include <bfd.h>
+  asection *s;
+],[
+  return bfd_section_flags(s) == 0;
+])],[],[have_bfd=no])
 if test "x$have_bfd" = "xyes"; then
     AC_DEFINE([HAVE_BFD], [1], [Define to 1 if you have the binutils development files installed])
     BFD_LIBS=-lbfd
@@ -839,7 +848,7 @@ CAIRO_ENABLE(symbol_lookup, symbol-lookup, auto, [
 PKG_CHECK_MODULES(glib, glib-2.0, have_glib=yes, have_glib=no)
 AC_SUBST(glib_CFLAGS)
 AC_SUBST(glib_LIBS)
-AM_CONDITIONAL(BUILD_SPHINX, test "x$have_glib" = "xyes" -a "x$have_windows" = "xno" -a "x$have_png" = "xyes")
+AM_CONDITIONAL(BUILD_SPHINX, test "x$have_glib" = "xyes" -a "x$have_windows" = "xno" -a "x$use_png" = "xyes")
 
 save_LIBS="$LIBS"
 AC_CHECK_LIB(rt, shm_open, shm_LIBS="-lrt")

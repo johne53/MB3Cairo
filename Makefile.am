@@ -71,12 +71,23 @@ EXTRA_DIST += \
 	util/cairo-trace/meson.build \
 	util/meson.build \
 	meson-cc-tests/atomic-ops-cxx11.c \
+	meson-cc-tests/bfd-section-flags.c \
 	meson-cc-tests/ipc_rmid_deferred_release.c \
 	meson-cc-tests/ft_has_color.c \
 	meson-cc-tests/mkdir-variant-1.c \
 	meson-cc-tests/pthread.c \
 	meson-cc-tests/atomic-ops-gcc-legacy.c \
 	meson-cc-tests/mkdir-variant-2.c \
+	subprojects/expat.wrap \
+	subprojects/fontconfig.wrap \
+	subprojects/freetype2.wrap \
+	subprojects/glib.wrap \
+	subprojects/gperf.wrap \
+	subprojects/libffi.wrap \
+	subprojects/libpng.wrap \
+	subprojects/pixman.wrap \
+	subprojects/proxy-libintl.wrap \
+	subprojects/zlib.wrap \
 	$(NULL)
 
 DISTCLEANFILES += config.cache

@@ -609,6 +609,7 @@ _cairo_recording_surface_acquire_source_image (void			 *abstract_surface,
     image = _cairo_image_surface_create_with_content (surface->base.content,
 						      surface->extents.width,
 						      surface->extents.height);
+    cairo_surface_set_device_offset (image, -surface->extents.x, -surface->extents.y);
     if (unlikely (image->status))
 	return image->status;
 
@@ -1125,9 +1126,18 @@ _cairo_recording_surface_tag (void			 *abstract_surface,
 
     command->begin = begin;
     command->tag_name = strdup (tag_name);
+    if (unlikely (command->tag_name == NULL)) {
+	status = _cairo_error (CAIRO_STATUS_NO_MEMORY);
+	goto CLEANUP_COMMAND;
+    }
     if (begin) {
-	if (attributes)
+	if (attributes) {
 	    command->attributes = strdup (attributes);
+	    if (unlikely (command->attributes == NULL)) {
+		status = _cairo_error (CAIRO_STATUS_NO_MEMORY);
+		goto CLEANUP_STRINGS;
+	    }
+	}
 
 	status = _cairo_pattern_init_snapshot (&command->source.base, source);
 	if (unlikely (status))
@@ -1144,9 +1154,9 @@ _cairo_recording_surface_tag (void			 *abstract_surface,
     status = _cairo_recording_surface_commit (surface, &command->header);
     if (unlikely (status)) {
 	if (begin)
-	    goto CLEANUP_STRINGS;
-	else
 	    goto CLEANUP_STYLE;
+	else
+	    goto CLEANUP_STRINGS;
     }
 
     _cairo_recording_surface_destroy_bbtree (surface);
@@ -1451,30 +1461,39 @@ _cairo_recording_surface_copy__tag (cairo_recording_surface_t *surface,
 
     command->begin = src->tag.begin;
     command->tag_name = strdup (src->tag.tag_name);
+    if (unlikely (command->tag_name == NULL)) {
+	status = _cairo_error (CAIRO_STATUS_NO_MEMORY);
+	goto err_command;
+    }
     if (src->tag.begin) {
-	if (src->tag.attributes)
+	if (src->tag.attributes) {
 	    command->attributes = strdup (src->tag.attributes);
+	    if (unlikely (command->attributes == NULL)) {
+		status = _cairo_error (CAIRO_STATUS_NO_MEMORY);
+		goto err_command;
+	    }
+	}
 
 	status = _cairo_pattern_init_copy (&command->source.base,
-					   &src->stroke.source.base);
+					   &src->tag.source.base);
 	if (unlikely (status))
 	    goto err_command;
 
 	status = _cairo_stroke_style_init_copy (&command->style,
-						&src->stroke.style);
+						&src->tag.style);
 	if (unlikely (status))
 	    goto err_source;
 
-	command->ctm = src->stroke.ctm;
-	command->ctm_inverse = src->stroke.ctm_inverse;
+	command->ctm = src->tag.ctm;
+	command->ctm_inverse = src->tag.ctm_inverse;
     }
 
     status = _cairo_recording_surface_commit (surface, &command->header);
     if (unlikely (status)) {
 	if (src->tag.begin)
-	    goto err_command;
-	else
 	    goto err_style;
+	else
+	    goto err_command;
     }
 
     return CAIRO_STATUS_SUCCESS;
@@ -1582,6 +1601,8 @@ _cairo_recording_surface_snapshot (void *abstract_other)
     surface->indices = NULL;
     surface->num_indices = 0;
     surface->optimize_clears = TRUE;
+    surface->has_bilevel_alpha = other->has_bilevel_alpha;
+    surface->has_only_op_over = other->has_only_op_over;
 
     _cairo_array_init (&surface->commands, sizeof (cairo_command_t *));
     status = _cairo_recording_surface_copy (surface, other);
@@ -1763,6 +1784,11 @@ _cairo_recording_surface_merge_source_attributes (cairo_recording_surface_t  *su
 
 	if (_cairo_surface_is_snapshot (surf))
 	    free_me = surf = _cairo_surface_snapshot_get_target (surf);
+
+	if (unlikely (surf->status))
+	    // There was some kind of error and the surface could be a nil error
+	    // surface with various "problems" (e.g. ->backend == NULL).
+	    return;
 
 	if (surf->type == CAIRO_SURFACE_TYPE_RECORDING) {
 	    cairo_recording_surface_t *rec_surf = (cairo_recording_surface_t *) surf;

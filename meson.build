@@ -3,8 +3,6 @@ project('cairo', 'c', 'cpp',
   version: run_command(find_program('version.py'), check: true).stdout().strip(),
 )
 
-cc = meson.get_compiler('c')
-
 # Keep in sync with configure.ac!
 freetype_required_version = '>= 9.7.3'
 fontconfig_required_version = '>= 2.2.95'
@@ -15,6 +13,27 @@ qtgui_required_version = '>= 4.4.0'
 libudev_required_version = '>= 136'
 libdrm_required_version = '>= 2.4'
 glib_required_version = '>= 2.14'
+
+# library versioning
+version_arr = meson.project_version().split('.')
+cairo_version_major = version_arr[0].to_int()
+cairo_version_minor = version_arr[1].to_int()
+cairo_version_micro = version_arr[2].to_int()
+
+# The libtool shared library version stuff.
+# Try and maintain compatibility with the previous library versioning.
+cairo_version_sonum = cairo_version_major + 1
+cairo_version =  cairo_version_major * 10000 + cairo_version_minor * 100 + cairo_version_micro
+
+if cairo_version_minor % 2 == 1
+  # unstable release
+  cairo_libversion = '@0@.@1@.0'.format(cairo_version_sonum, cairo_version)
+else
+  # stable release
+  cairo_libversion = '@0@.@1@.@2@'.format(cairo_version_sonum, cairo_version, cairo_version_micro)
+endif
+
+cc = meson.get_compiler('c')
 
 if cc.get_id() == 'msvc'
   # Basic usage in the cairo type system that causes spammy and useless warnings
@@ -264,13 +283,28 @@ if x11_dep.found() and xext_dep.found()
     ['X11/extensions/shmstr.h', {'extra-headers': extra_headers}],
   ]
   deps += [x11_dep, xext_dep]
-  res = cc.run(files('meson-cc-tests/ipc_rmid_deferred_release.c'),
-    dependencies: [x11_dep, xext_dep],
-    name: 'shmctl IPC_RMID allowes subsequent attaches')
 
-  if res.returncode() == 0
-    conf.set('IPC_RMID_DEFERRED_RELEASE', 1)
+  # Can skip the run check by providing the result in a cross file or
+  # native file as bool property value.
+  prop = meson.get_external_property('ipc_rmid_deferred_release', 'auto')
+  # We don't know the type of prop (bool, string) but need to differentiate
+  # between a set value (bool) or the fallback value (string), so convert to
+  # a string and chec the string value.
+  prop_str = '@0@'.format(prop)
+  if prop_str in ['true', 'false']
+    ipc_rmid_deferred_release = (prop_str == 'true')
+    message('IPC_RMID_DEFERRED_RELEASE:', ipc_rmid_deferred_release)
+  elif prop_str == 'auto'
+    res = cc.run(files('meson-cc-tests/ipc_rmid_deferred_release.c'),
+      dependencies: [x11_dep, xext_dep],
+      name: 'shmctl IPC_RMID allowes subsequent attaches')
+
+    ipc_rmid_deferred_release = (res.returncode() == 0)
+  else
+    error('Unexpected value for external property ipc_rmid_deferred_release: @0@'.format(prop_str))
   endif
+
+  conf.set10('IPC_RMID_DEFERRED_RELEASE', ipc_rmid_deferred_release)
 endif
 
 if feature_conf.get('CAIRO_HAS_XLIB_SURFACE', 0) == 1
@@ -312,8 +346,7 @@ if xcb_dep.found() and xcb_render_dep.found()
 endif
 
 if feature_conf.get('CAIRO_HAS_XCB_SURFACE', 0) == 1 and feature_conf.get('CAIRO_HAS_XLIB_SURFACE', 0) == 1
-  # FIXME: automagic
-  x11xcb_dep = dependency('x11-xcb', required: false)
+  x11xcb_dep = dependency('x11-xcb', required: get_option('xlib-xcb'))
   if x11xcb_dep.found()
     deps += [x11xcb_dep]
     feature_conf.set('CAIRO_HAS_XLIB_XCB_FUNCTIONS', 1)
@@ -352,37 +385,34 @@ if qtgui_dep.found() and false
   deps += [qtgui_dep]
 endif
 
-# Untested
-if cc.has_header('ApplicationServices/ApplicationServices.h')
-  if cc.has_header('CoreGraphics/CoreGraphics.h')
-    quartz_extra_libs = ['-Xlinker', '-framework', '-Xlinker', 'CoreGraphics']
-  else
-    quartz_extra_libs = ['-Xlinker', '-framework', '-Xlinker', 'ApplicationServices']
+if host_machine.system() == 'darwin' and not get_option('quartz').disabled()
+  quartz_deps = dependency('appleframeworks', modules : ['CoreFoundation', 'ApplicationServices'], required: get_option('quartz'))
+
+  if quartz_deps.found()
+    deps += [quartz_deps]
+
+    feature_conf.set('CAIRO_HAS_QUARTZ_SURFACE', 1)
+    feature_conf.set('CAIRO_HAS_QUARTZ_FONT', 1)
+    feature_conf.set('CAIRO_HAS_QUARTZ_IMAGE_SURFACE', 1)
+
+    built_features += [
+      {
+        'name': 'cairo-quartz',
+        'description': 'Quartz surface backend',
+        'deps': quartz_deps,
+      },
+      {
+        'name': 'cairo-quartz-image',
+        'description': 'Quartz Image surface backend',
+        'deps': quartz_deps,
+      },
+      {
+        'name': 'cairo-quartz-font',
+        'description': 'Quartz font backend',
+        'deps': quartz_deps,
+      },
+    ]
   endif
-
-  extra_link_args += quartz_extra_libs
-
-  feature_conf.set('CAIRO_HAS_QUARTZ_SURFACE', 1)
-  feature_conf.set('CAIRO_HAS_QUARTZ_FONT', 1)
-  feature_conf.set('CAIRO_HAS_QUARTZ_IMAGE_SURFACE', 1)
-
-  built_features += [
-    {
-      'name': 'cairo-quartz',
-      'description': 'Quartz surface backend',
-      'libs': quartz_extra_libs,
-    },
-    {
-      'name': 'cairo-quartz-image',
-      'description': 'Quartz Image surface backend',
-      'libs': quartz_extra_libs,
-    },
-    {
-      'name': 'cairo-quartz-font',
-      'description': 'Quartz font backend',
-      'libs': quartz_extra_libs,
-    },
-  ]
 endif
 
 if host_machine.system() == 'windows'
@@ -657,17 +687,16 @@ if zlib_dep.found() and png_dep.found()
   }]
 endif
 
-# Untested, libiberty.h is in a libiberty subfolder for me
-# FIXME: automagic
-bfd_dep = cc.find_library('bfd', required: false)
-if bfd_dep.found() and cc.has_function('bfd_openr', dependencies: [bfd_dep])
-  if cc.has_header('libiberty.h')
-    conf.set('HAVE_BFD', 1)
-    deps += [bfd_dep]
-  endif
+bfd_dep = cc.find_library('bfd', has_headers: ['bfd.h'], required: get_option('symbol-lookup'))
+if bfd_dep.found() and \
+   cc.has_function('bfd_openr', dependencies: [bfd_dep]) and \
+   cc.links(files('meson-cc-tests/bfd-section-flags.c'), name: 'bfd_section_flags', dependencies: bfd_dep)
+  conf.set('HAVE_BFD', 1)
+  deps += [bfd_dep]
+elif get_option('symbol-lookup').enabled()
+  error('symbol lookup via bfd was enabled via options but is not available (bfd might be too old)')
 endif
 
-# Untested, see above
 if conf.get('HAVE_BFD', 0) == 1
   conf.set('CAIRO_HAS_SYMBOL_LOOKUP', 1)
 endif
@@ -682,7 +711,7 @@ if feature_conf.get('CAIRO_HAS_PS_SURFACE', 0) == 1
 
   if libspectre_dep.found()
     conf.set('CAIRO_HAS_SPECTRE', 1)
-    deps += [libspectre_dep]
+    test_deps += [libspectre_dep]
   endif
 endif
 
@@ -868,13 +897,12 @@ foreach feature: built_features
   feature_deps = feature.get('deps', [])
   feature_libs = feature.get('libs', [])
   feature_compile_deps = feature.get('compile-deps', [])
-  pkgmod.generate(libraries: [libcairo] + feature_deps + feature_libs,
+  pkgmod.generate(libraries: [libcairo, feature_deps, feature_libs],
     name: feature['name'],
     description: feature['description'] + ' for cairo graphics library',
   )
   meson.override_dependency(feature['name'],
-    declare_dependency(link_with: libcairo,
-      dependencies: feature_deps + feature_compile_deps,
+    declare_dependency(dependencies: [libcairo_dep, feature_deps, feature_compile_deps],
       link_args: feature_libs,
     )
   )

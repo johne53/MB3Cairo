@@ -25,6 +25,7 @@ test_sources = \
 	big-trap.c					\
 	bilevel-image.c					\
 	bug-40410.c					\
+	bug-448.c					\
 	bug-51910.c					\
 	bug-75705.c					\
 	bug-84115.c					\
@@ -34,6 +35,7 @@ test_sources = \
 	bug-source-cu.c					\
 	bug-extents.c					\
 	bug-seams.c					\
+	bug-image-compositor.c				\
 	caps.c						\
 	checkerboard.c					\
 	caps-joins.c					\
@@ -416,8 +418,8 @@ gl_surface_test_sources = \
 	gl-surface-source.c
 
 egl_surface_test_sources = \
-       egl-oversized-surface.c \
-       egl-surface-source.c
+	egl-oversized-surface.c \
+	egl-surface-source.c
 
 quartz_surface_test_sources = quartz-surface-source.c
 
