@@ -5,7 +5,7 @@ require "../local-paths.lib";
 
 $major = 1;
 $minor = 17;
-$micro = 3;
+$micro = 4;
 $binary_age = 117;
 $interface_age = 0;
 $current_minus_age = 2;
