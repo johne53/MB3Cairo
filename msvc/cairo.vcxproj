@@ -86,7 +86,6 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>.;..\..\..\include;..\..\..\include\freetype;..\..\..\include\libpng12;..\..\..\include\pixman-1;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WIN64;DEBUG;_DEBUG;_CRT_SECURE_NO_WARNINGS;_WINDOWS;CAIRO_HAS_WIN32_SURFACE=1;CAIRO_HAS_WIN32_FONT=1;G_LOG_DOMAIN="Cairo";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
